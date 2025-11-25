@@ -2,6 +2,7 @@
 
 import { useTransition } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import { Trash2 } from 'lucide-react'
@@ -23,6 +24,7 @@ interface NoteCardProps {
 }
 
 export function NoteCard({ note }: NoteCardProps) {
+  const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
   const handleDelete = (e: React.MouseEvent) => {
@@ -33,7 +35,12 @@ export function NoteCard({ note }: NoteCardProps) {
       await deleteNote(note.id)
     })
   }
-
+  // 标签点击处理函数
+  const handleTagClick = (e: React.MouseEvent, tagName: string) => {
+    e.preventDefault() // 阻止 Link 跳转详情页
+    e.stopPropagation() // 阻止事件冒泡
+    router.push(`/search?tag=${tagName}`) // 跳转到搜索页并带上参数
+  }
   return (
     <Link href={`/notes/${note.id}`}>
       <Card className="group relative flex h-full cursor-pointer flex-col transition-shadow hover:shadow-md">
@@ -44,7 +51,12 @@ export function NoteCard({ note }: NoteCardProps) {
           {note.tags.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {note.tags.map((tag) => (
-                <Badge key={tag.id} variant="secondary" className="text-xs font-normal">
+                <Badge
+                  key={tag.id}
+                  variant="secondary"
+                  className="hover:bg-secondary/80 cursor-pointer text-xs font-normal"
+                  onClick={(e) => handleTagClick(e, tag.name)}
+                >
                   {tag.name}
                 </Badge>
               ))}
