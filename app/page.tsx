@@ -1,3 +1,143 @@
-export default function Home() {
-  return null
+import Link from 'next/link'
+import { redirect } from 'next/navigation'
+import { auth, currentUser } from '@clerk/nextjs/server'
+import { formatDistanceToNow } from 'date-fns'
+import { zhCN } from 'date-fns/locale'
+import { ArrowRight, FileText, PenLine, Sparkles } from 'lucide-react'
+
+import prisma from '@/lib/prisma'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+
+export default async function Home() {
+  const { userId } = await auth()
+  const user = await currentUser()
+
+  if (!userId || !user) {
+    // 如果没登录，由 layout.tsx 的 SignedOut 处理，或者这里不渲染
+    return null
+  }
+
+  // 获取数据库用户
+  const dbUser = await prisma.user.findUnique({
+    where: { clerkId: userId },
+    include: {
+      _count: {
+        select: { notes: true },
+      },
+    },
+  })
+
+  // 如果是新用户，还没同步到本地库
+  if (!dbUser) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center space-y-4">
+        <h2 className="text-2xl font-bold">欢迎来到熙记</h2>
+        <p className="text-gray-500">正在初始化您的空间...</p>
+        <Button asChild>
+          <Link href="/notes">开始记录</Link>
+        </Button>
+      </div>
+    )
+  }
+
+  // 获取最近的 3 条笔记
+  const recentNotes = await prisma.note.findMany({
+    where: { userId: dbUser.id, deletedAt: null },
+    orderBy: { updatedAt: 'desc' },
+    take: 3,
+  })
+  const fullName =
+    [user.firstName, user.lastName].filter(Boolean).join('') || user.username || '朋友'
+  // 获取当前时间段的问候语
+  const hour = new Date().getHours()
+  let greeting = '你好'
+  if (hour < 12) greeting = '早上好'
+  else if (hour < 18) greeting = '下午好'
+  else greeting = '晚上好'
+
+  return (
+    <div className="space-y-8">
+      {/* 顶部欢迎区域 */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+            {greeting}，{fullName}
+          </h1>
+          <p className="mt-2 text-gray-500">今天有什么小希冀想要记录吗？</p>
+        </div>
+        <Button
+          asChild
+          className="bg-black text-white hover:bg-gray-800 dark:bg-white dark:text-black"
+        >
+          <Link href="/notes">
+            <PenLine className="mr-2 h-4 w-4" />
+            开始记录
+          </Link>
+        </Button>
+      </div>
+
+      {/* 统计卡片区域 */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">总笔记</CardTitle>
+            <FileText className="text-muted-foreground h-4 w-4" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{dbUser._count.notes}</div>
+            <p className="text-muted-foreground text-xs">记录的点点滴滴</p>
+          </CardContent>
+        </Card>
+
+        {/* 这里预留给未来的“心愿”统计 */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">小希冀</CardTitle>
+            <Sparkles className="h-4 w-4 text-yellow-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">0</div>
+            <p className="text-muted-foreground text-xs">正在奔赴的美好 (开发中)</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* 最近记录 */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-semibold">最近编辑</h2>
+        {recentNotes.length > 0 ? (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            {recentNotes.map((note) => (
+              <Link key={note.id} href={`/notes/${note.id}`}>
+                <Card className="h-full transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                  <CardHeader>
+                    <CardTitle className="line-clamp-1 text-lg">
+                      {note.title || '无标题笔记'}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="line-clamp-2 text-sm text-gray-500">
+                      {note.content || '暂无内容...'}
+                    </p>
+                    <p className="mt-4 text-xs text-gray-400">
+                      {formatDistanceToNow(new Date(note.updatedAt), {
+                        addSuffix: true,
+                        locale: zhCN,
+                      })}{' '}
+                      更新
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-lg border border-dashed p-8 text-center text-gray-500">
+            还没有记录，快去写下第一条笔记吧！
+          </div>
+        )}
+      </div>
+    </div>
+  )
 }

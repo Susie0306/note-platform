@@ -50,7 +50,7 @@ export function NoteEditor({ noteId, initialTitle, initialContent, initialTags }
     })
   }, 1000)
 
-  // ✅ 监听数据变化，触发防抖保存
+  // 监听数据变化，触发防抖保存
   useEffect(() => {
     if (isMounted.current) {
       debouncedSave(title, content, tags)
@@ -93,7 +93,7 @@ export function NoteEditor({ noteId, initialTitle, initialContent, initialTags }
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="输入笔记标题..."
-            className="h-auto border-none px-0 text-2xl font-bold shadow-none focus-visible:ring-0"
+            className="placeholder:text-muted-foreground/70 h-auto border-none px-0 text-4xl font-bold shadow-none focus-visible:ring-0"
           />
           <div className="flex items-center gap-2 text-sm text-gray-400">
             {/* 状态展示区域优化 */}

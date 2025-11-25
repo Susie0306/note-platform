@@ -11,7 +11,7 @@ interface TagInputProps {
   setTags: (tags: string[]) => void
   placeholder?: string
 }
-
+const SUGGESTED_TAGS = ['工作', '生活', '学习', '旅行', '小希冀']
 export function TagInput({ tags, setTags, placeholder }: TagInputProps) {
   const [inputValue, setInputValue] = useState('')
 
@@ -39,29 +39,46 @@ export function TagInput({ tags, setTags, placeholder }: TagInputProps) {
   }
 
   return (
-    <div className="focus-within:ring-ring ring-offset-background flex flex-wrap gap-2 rounded-md border bg-white p-2 shadow-sm focus-within:ring-2 focus-within:ring-offset-2">
-      {tags.map((tag, index) => (
-        <Badge key={index} variant="secondary" className="gap-1 px-2 py-1 text-sm">
-          {tag}
-          <button
-            type="button"
-            onClick={() => removeTag(tag)}
-            className="ring-offset-background focus:ring-ring hover:bg-secondary-foreground/20 ml-1 rounded-full outline-none focus:ring-2 focus:ring-offset-2"
-          >
-            <X className="text-muted-foreground hover:text-foreground h-3 w-3" />
-            <span className="sr-only">Remove {tag}</span>
-          </button>
-        </Badge>
-      ))}
+    <div className="space-y-2">
+      <div className="focus-within:ring-ring ring-offset-background flex flex-wrap gap-2 rounded-md border bg-white p-2 shadow-sm focus-within:ring-2 focus-within:ring-offset-2">
+        {tags.map((tag, index) => (
+          <Badge key={index} variant="secondary" className="gap-1 px-2 py-1 text-sm">
+            {tag}
+            <button
+              type="button"
+              onClick={() => removeTag(tag)}
+              className="ring-offset-background focus:ring-ring hover:bg-secondary-foreground/20 ml-1 rounded-full outline-none focus:ring-2 focus:ring-offset-2"
+            >
+              <X className="text-muted-foreground hover:text-foreground h-3 w-3" />
+              <span className="sr-only">Remove {tag}</span>
+            </button>
+          </Badge>
+        ))}
 
-      <Input
-        type="text"
-        value={inputValue}
-        onChange={(e) => setInputValue(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder={tags.length === 0 ? placeholder || '输入标签，按回车添加...' : ''}
-        className="h-7 min-w-[120px] flex-1 border-none px-1 shadow-none focus-visible:ring-0"
-      />
+        <Input
+          type="text"
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder={tags.length === 0 ? placeholder || '输入标签，按回车添加...' : ''}
+          className="h-7 min-w-[120px] flex-1 border-none px-1 shadow-none focus-visible:ring-0"
+        />
+      </div>
+      <div className="flex items-center gap-2 text-xs text-gray-500">
+        <span>快速添加:</span>
+        {SUGGESTED_TAGS.map((tag) => (
+          <button
+            key={tag}
+            type="button"
+            onClick={() => {
+              if (!tags.includes(tag)) setTags([...tags, tag])
+            }}
+            className="cursor-pointer hover:text-blue-500 hover:underline"
+          >
+            {tag}
+          </button>
+        ))}
+      </div>
     </div>
   )
 }

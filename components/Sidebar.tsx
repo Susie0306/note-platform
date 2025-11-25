@@ -124,7 +124,7 @@ export function MobileNav() {
           <Sidebar className="pt-4" onNavClick={() => setOpen(false)} />
         </SheetContent>
       </Sheet>
-      <span className="text-lg font-bold">笔记平台</span>
+      <span className="text-lg font-bold tracking-tight">熙记</span>
     </div>
   )
 }

@@ -14,7 +14,7 @@ function MobileNavSkeleton() {
         <Menu className="h-6 w-6 opacity-50" />
       </Button>
       {/* 标题占位 */}
-      <span className="text-lg font-bold text-gray-400">笔记平台...</span>
+      <span className="text-lg font-bold tracking-tight">熙记</span>
     </div>
   )
 }
