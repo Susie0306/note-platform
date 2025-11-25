@@ -11,30 +11,28 @@ interface NotePageProps {
 }
 
 export default async function NotePage({ params }: NotePageProps) {
-  // 权限检查：确保用户已登录
   const { userId } = await auth()
   if (!userId) redirect('/')
 
-  // 异步获取 params (Next.js 15 规范)
   const { id } = await params
 
-  // 从数据库获取笔记
+  // 使用 include 连带查询 tags
   const note = await prisma.note.findUnique({
-    where: {
-      id: id,
-    },
+    where: { id },
+    include: { tags: true },
   })
 
-  // 简单的权限控制：如果笔记不存在或不属于该用户
-  // 由于还没做 User.id 和 Clerk.id 的复杂映射查询，
-  // 这里暂时先只判断 note 是否存在。严谨的判断需要查 User 表。
-  if (!note) {
-    return <div>笔记未找到</div>
-  }
+  if (!note) return <div>笔记未找到</div>
 
   return (
     <div className="h-full">
-      <NoteEditor noteId={note.id} initialTitle={note.title} initialContent={note.content || ''} />
+      <NoteEditor
+        noteId={note.id}
+        initialTitle={note.title}
+        initialContent={note.content || ''}
+        // 提取标签名字组成的数组传给组件
+        initialTags={note.tags.map((tag) => tag.name)}
+      />
     </div>
   )
 }

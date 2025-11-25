@@ -26,9 +26,6 @@ export default async function NotesPage({ searchParams }: NotesPageProps) {
     where: { clerkId: userId },
   })
 
-  // 如果用户没同步过，理论上他不应该有笔记，直接返回空
-  if (!dbUser) return <div>暂无数据</div>
-
   // 处理分页参数
   const params = await searchParams
   const currentPage = Number(params.page) || 1
@@ -36,18 +33,25 @@ export default async function NotesPage({ searchParams }: NotesPageProps) {
 
   // 并行查询：获取数据列表 + 总条数 (用于计算总页数)
   // 使用 Promise.all 提高性能
-  const [notes, totalCount] = await Promise.all([
-    prisma.note.findMany({
-      where: { userId: dbUser.id, deletedAt: null },
-      orderBy: { updatedAt: 'desc' }, // 按更新时间倒序
-      take: PAGE_SIZE,
-      skip: skip,
-    }),
-    prisma.note.count({
-      where: { userId: dbUser.id, deletedAt: null },
-    }),
-  ])
+  let notes: any[] = []
+  let totalCount = 0
 
+  if (dbUser) {
+    const [data, count] = await Promise.all([
+      prisma.note.findMany({
+        where: { userId: dbUser.id, deletedAt: null },
+        orderBy: { updatedAt: 'desc' },
+        take: PAGE_SIZE,
+        skip: skip,
+        include: { tags: true },
+      }),
+      prisma.note.count({
+        where: { userId: dbUser.id, deletedAt: null },
+      }),
+    ])
+    notes = data
+    totalCount = count
+  }
   const totalPages = Math.ceil(totalCount / PAGE_SIZE)
 
   return (

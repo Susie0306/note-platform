@@ -6,6 +6,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import { Trash2 } from 'lucide-react'
 
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { deleteNote } from '@/app/actions/notes'
@@ -17,6 +18,7 @@ interface NoteCardProps {
     title: string
     content: string | null
     createdAt: Date
+    tags: { id: string; name: string }[]
   }
 }
 
@@ -38,7 +40,16 @@ export function NoteCard({ note }: NoteCardProps) {
         <CardHeader>
           <CardTitle className="line-clamp-1 text-lg">{note.title || '无标题笔记'}</CardTitle>
         </CardHeader>
-        <CardContent className="flex-1">
+        <CardContent className="flex-1 space-y-3">
+          {note.tags.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {note.tags.map((tag) => (
+                <Badge key={tag.id} variant="secondary" className="text-xs font-normal">
+                  {tag.name}
+                </Badge>
+              ))}
+            </div>
+          )}
           {/* 简单的文本截断，显示前3行 */}
           <p className="line-clamp-3 h-[4.5em] text-sm text-gray-500">
             {note.content || '暂无内容...'}

@@ -1,0 +1,67 @@
+'use client'
+
+import React, { useState } from 'react'
+import { X } from 'lucide-react'
+
+import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+
+interface TagInputProps {
+  tags: string[]
+  setTags: (tags: string[]) => void
+  placeholder?: string
+}
+
+export function TagInput({ tags, setTags, placeholder }: TagInputProps) {
+  const [inputValue, setInputValue] = useState('')
+
+  // 处理键盘事件
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      const newTag = inputValue.trim()
+
+      // 只有非空且不重复的标签才添加
+      if (newTag && !tags.includes(newTag)) {
+        setTags([...tags, newTag])
+        setInputValue('')
+      }
+    } else if (e.key === 'Backspace' && !inputValue && tags.length > 0) {
+      // 输入框为空时按退格，删除最后一个标签
+      e.preventDefault()
+      setTags(tags.slice(0, -1))
+    }
+  }
+
+  // 删除标签
+  const removeTag = (tagToRemove: string) => {
+    setTags(tags.filter((tag) => tag !== tagToRemove))
+  }
+
+  return (
+    <div className="focus-within:ring-ring ring-offset-background flex flex-wrap gap-2 rounded-md border bg-white p-2 shadow-sm focus-within:ring-2 focus-within:ring-offset-2">
+      {tags.map((tag, index) => (
+        <Badge key={index} variant="secondary" className="gap-1 px-2 py-1 text-sm">
+          {tag}
+          <button
+            type="button"
+            onClick={() => removeTag(tag)}
+            className="ring-offset-background focus:ring-ring hover:bg-secondary-foreground/20 ml-1 rounded-full outline-none focus:ring-2 focus:ring-offset-2"
+          >
+            <X className="text-muted-foreground hover:text-foreground h-3 w-3" />
+            <span className="sr-only">Remove {tag}</span>
+          </button>
+        </Badge>
+      ))}
+
+      <Input
+        type="text"
+        value={inputValue}
+        onChange={(e) => setInputValue(e.target.value)}
+        onKeyDown={handleKeyDown}
+        placeholder={tags.length === 0 ? placeholder || '输入标签，按回车添加...' : ''}
+        className="h-7 min-w-[120px] flex-1 border-none px-1 shadow-none focus-visible:ring-0"
+      />
+    </div>
+  )
+}

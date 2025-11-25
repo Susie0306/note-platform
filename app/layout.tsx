@@ -8,6 +8,7 @@ import { Sidebar } from '@/components/Sidebar'
 import './globals.css'
 
 import { MobileNavWrapper } from '@/components/MobileNavWrapper'
+import { Toaster } from '@/components/ui/sonner'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -69,6 +70,7 @@ export default function RootLayout({
               <main className="flex-1 p-6">{children}</main>
             </div>
           </SignedIn>
+          <Toaster />
         </body>
       </html>
     </ClerkProvider>

@@ -46,12 +46,23 @@ export async function createNote() {
   redirect(`/notes/${note.id}`)
 }
 
-export async function updateNote(noteId: string, title: string, content: string) {
+export async function updateNote(
+  noteId: string,
+  title: string,
+  content: string,
+  tags: string[] = []
+) {
   const { userId } = await auth()
   if (!userId) throw new Error('Unauthorized')
 
   // 简单的校验
   if (!noteId) throw new Error('Note ID is required')
+
+  // 获取本地用户 ID (因为 Tag 需要关联 userId)
+  const dbUser = await prisma.user.findUnique({
+    where: { clerkId: userId },
+  })
+  if (!dbUser) throw new Error('User not found')
 
   // 更新数据库
   await prisma.note.update({
@@ -60,11 +71,29 @@ export async function updateNote(noteId: string, title: string, content: string)
       title,
       content,
       updatedAt: new Date(),
+      tags: {
+        // 先断开所有旧标签的关联 (set: [])
+        set: [],
+        // 然后重新关联或创建新标签
+        connectOrCreate: tags.map((tagName) => ({
+          where: {
+            name_userId: {
+              name: tagName,
+              userId: dbUser.id,
+            },
+          },
+          create: {
+            name: tagName,
+            userId: dbUser.id,
+          },
+        })),
+      },
     },
   })
 
   // 这里不 redirect是因为用户可能还在编辑
   // 静默保存
+  revalidatePath('/notes')
   return { success: true }
 }
 
