@@ -91,7 +91,9 @@ export function Sidebar({ className, onNavClick }: SidebarProps) {
                   <span
                     className={cn(
                       'group hover:bg-accent hover:text-accent-foreground flex items-center rounded-md px-3 py-2 text-sm font-medium',
-                      pathname === item.href ? 'bg-accent' : 'transparent'
+                      pathname === item.href
+                        ? 'bg-primary/10 text-primary font-bold'
+                        : 'text-muted-foreground hover:bg-primary/5 hover:text-primary'
                     )}
                   >
                     <item.icon className="mr-2 h-4 w-4" />

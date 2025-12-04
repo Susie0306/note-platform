@@ -53,8 +53,8 @@ export function NoteCard({ note }: NoteCardProps) {
               {note.tags.map((tag) => (
                 <Badge
                   key={tag.id}
-                  variant="secondary"
-                  className="hover:bg-secondary/80 cursor-pointer text-xs font-normal"
+                  variant="outline"
+                  className="bg-primary/10 text-primary hover:bg-primary/20 cursor-pointer border-transparent text-xs font-normal transition-colors"
                   onClick={(e) => handleTagClick(e, tag.name)}
                 >
                   {tag.name}
