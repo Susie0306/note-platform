@@ -1,16 +1,20 @@
 'use client'
 
 import React, { useEffect, useRef, useState, useTransition } from 'react'
-import { Cloud, CloudOff, Save } from 'lucide-react'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
+import { Cloud, CloudOff, HardDrive, Save } from 'lucide-react'
 import { toast } from 'sonner'
 import { useDebouncedCallback } from 'use-debounce'
 
+import {
+  enqueueSyncTask,
+  saveNoteToLocal,
+  type NoteData,
+  type NoteUpdatePayload,
+} from '@/lib/indexeddb'
+import { PlateEditor } from '@/components/PlateEditor'
 import { TagInput } from '@/components/TagInput'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { updateNote } from '@/app/actions/notes'
 
 interface NoteEditorProps {
@@ -18,39 +22,84 @@ interface NoteEditorProps {
   initialTitle: string
   initialContent: string
   initialTags: string[]
+  initialCreatedAt: Date
 }
 
-export function NoteEditor({ noteId, initialTitle, initialContent, initialTags }: NoteEditorProps) {
+export function NoteEditor({
+  noteId,
+  initialTitle,
+  initialContent,
+  initialTags,
+  initialCreatedAt,
+}: NoteEditorProps) {
   const [title, setTitle] = useState(initialTitle || '')
+
+  // content 依然存的是 Markdown 字符串，保持了和后端的兼容性
   const [content, setContent] = useState(initialContent || '')
+
   const [tags, setTags] = useState<string[]>(initialTags || [])
 
   const [isSaving, startTransition] = useTransition()
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
+  const [saveLocation, setSaveLocation] = useState<'cloud' | 'local' | null>(null)
 
-  // 使用 ref 来避免初始加载时触发自动保存
   const isMounted = useRef(false)
 
-  // 核心逻辑：创建一个防抖的保存函数
-  // 当用户停止输入 1000ms (1秒) 后，才会真正执行这个函数
-  const debouncedSave = useDebouncedCallback(async (currentTitle, currentContent, currentTags) => {
-    // 如果还没挂载（刚进页面），不保存
-    if (!isMounted.current) return
+  // 核心保存逻辑
+  const performSave = async (
+    currentTitle: string,
+    currentContent: string,
+    currentTags: string[]
+  ) => {
+    const now = new Date()
 
-    startTransition(async () => {
+    const noteData: NoteData = {
+      id: noteId,
+      title: currentTitle,
+      content: currentContent,
+      tags: currentTags.map((name) => ({ id: 'local-temp', name })),
+      createdAt: initialCreatedAt,
+      updatedAt: now,
+    }
+
+    const payload: NoteUpdatePayload = {
+      title: currentTitle,
+      content: currentContent,
+      tags: currentTags,
+    }
+
+    if (navigator.onLine) {
       try {
         await updateNote(noteId, currentTitle, currentContent, currentTags)
-        setLastSaved(new Date())
-        // 自动保存通常不需要弹 toast 干扰用户，右上角状态显示即可
-        // toast.success('自动保存成功')
+        await saveNoteToLocal(noteData)
+        setSaveLocation('cloud')
+        setLastSaved(now)
       } catch (error) {
-        console.error('自动保存失败', error)
-        toast.error('自动保存失败')
+        console.error('云端保存失败，尝试降级到本地...', error)
+        await fallbackToLocal(noteData, payload)
       }
-    })
+    } else {
+      await fallbackToLocal(noteData, payload)
+    }
+  }
+
+  const fallbackToLocal = async (noteData: NoteData, payload: NoteUpdatePayload) => {
+    try {
+      await saveNoteToLocal(noteData)
+      await enqueueSyncTask('UPDATE', noteId, payload)
+      setSaveLocation('local')
+      setLastSaved(new Date())
+    } catch (err) {
+      toast.error('保存失败：无法写入本地存储')
+    }
+  }
+
+  // 防抖保存
+  const debouncedSave = useDebouncedCallback((t: string, c: string, tg: string[]) => {
+    if (!isMounted.current) return
+    startTransition(() => performSave(t, c, tg))
   }, 1000)
 
-  // 监听数据变化，触发防抖保存
   useEffect(() => {
     if (isMounted.current) {
       debouncedSave(title, content, tags)
@@ -59,21 +108,15 @@ export function NoteEditor({ noteId, initialTitle, initialContent, initialTags }
     }
   }, [title, content, tags, debouncedSave])
 
-  // 手动保存（点击按钮或快捷键）- 立即执行
-  const handleManualSave = async () => {
-    debouncedSave.cancel() // 取消还在排队的自动保存
+  const handleManualSave = () => {
+    debouncedSave.cancel()
     startTransition(async () => {
-      try {
-        await updateNote(noteId, title, content, tags)
-        setLastSaved(new Date())
-        toast.success('保存成功')
-      } catch (error) {
-        toast.error('保存失败')
-      }
+      await performSave(title, content, tags)
+      toast.success(navigator.onLine ? '已保存到云端' : '已保存到本地')
     })
   }
 
-  // 快捷键监听
+  // 快捷键保存
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
@@ -87,6 +130,7 @@ export function NoteEditor({ noteId, initialTitle, initialContent, initialTags }
 
   return (
     <div className="flex h-[calc(100dvh-130px)] flex-col space-y-4">
+      {/* 顶部区域 */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between gap-4">
           <Input
@@ -96,16 +140,19 @@ export function NoteEditor({ noteId, initialTitle, initialContent, initialTags }
             className="placeholder:text-muted-foreground/70 h-auto border-none px-0 text-4xl font-bold shadow-none focus-visible:ring-0"
           />
           <div className="flex items-center gap-2 text-sm text-gray-400">
-            {/* 状态展示区域优化 */}
             {isSaving ? (
               <span className="flex items-center gap-1 text-blue-500">
                 <Cloud className="h-4 w-4 animate-pulse" />
                 保存中...
               </span>
             ) : lastSaved ? (
-              <span className="flex items-center gap-1">
-                <Cloud className="h-4 w-4" />
-                已保存 {lastSaved.toLocaleTimeString()}
+              <span className="flex items-center gap-1 transition-colors duration-500">
+                {saveLocation === 'local' ? (
+                  <HardDrive className="h-4 w-4 text-orange-500" />
+                ) : (
+                  <Cloud className="h-4 w-4 text-green-500" />
+                )}
+                {saveLocation === 'local' ? '已存本地' : '已同步'} {lastSaved.toLocaleTimeString()}
               </span>
             ) : (
               <span className="flex items-center gap-1">
@@ -114,7 +161,6 @@ export function NoteEditor({ noteId, initialTitle, initialContent, initialTags }
               </span>
             )}
 
-            {/* 保留手动保存按钮，以防万一 */}
             <Button
               onClick={handleManualSave}
               disabled={isSaving}
@@ -130,27 +176,9 @@ export function NoteEditor({ noteId, initialTitle, initialContent, initialTags }
         <TagInput tags={tags} setTags={setTags} />
       </div>
 
-      {/* ... 主体区域 ... */}
-      <div className="flex flex-1 gap-4 overflow-hidden rounded-lg border bg-white shadow-sm">
-        <div className="h-full w-1/2 border-r bg-gray-50">
-          <Textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="开始用 Markdown 写作..."
-            className="h-full w-full resize-none border-none bg-transparent p-4 font-mono text-sm focus-visible:ring-0"
-          />
-        </div>
-
-        <div className="prose prose-slate dark:prose-invert h-full w-1/2 max-w-none overflow-y-auto p-8">
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            components={{
-              a: ({ node, ...props }) => <a {...props} target="_blank" rel="noopener noreferrer" />,
-            }}
-          >
-            {content || '*预览区域*'}
-          </ReactMarkdown>
-        </div>
+      <div className="h-full min-h-0 flex-1">
+        {' '}
+        <PlateEditor initialMarkdown={initialContent} onChange={setContent} />
       </div>
     </div>
   )

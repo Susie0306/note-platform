@@ -8,6 +8,7 @@ import { Sidebar } from '@/components/Sidebar'
 import './globals.css'
 
 import { MobileNavWrapper } from '@/components/MobileNavWrapper'
+import { SyncManager } from '@/components/SyncManager'
 import { ThemeColorProvider } from '@/components/theme-color-provider'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from '@/components/ui/sonner'
@@ -102,6 +103,7 @@ export default function RootLayout({
                   {/* 主内容区域 */}
                   <main className="flex-1 p-6 md:p-6">{children}</main>
                 </div>
+                <SyncManager />
               </SignedIn>
               <Toaster />
             </ThemeColorProvider>

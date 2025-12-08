@@ -32,6 +32,7 @@ export default async function NotePage({ params }: NotePageProps) {
         initialContent={note.content || ''}
         // 提取标签名字组成的数组传给组件
         initialTags={note.tags.map((tag) => tag.name)}
+        initialCreatedAt={note.createdAt}
       />
     </div>
   )

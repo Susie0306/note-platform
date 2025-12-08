@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@clerk/nextjs/server'
+import { Note, Tag } from '@prisma/client'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 import prisma from '@/lib/prisma'
@@ -33,7 +34,7 @@ export default async function NotesPage({ searchParams }: NotesPageProps) {
 
   // 并行查询：获取数据列表 + 总条数 (用于计算总页数)
   // 使用 Promise.all 提高性能
-  let notes: any[] = []
+  let notes: (Note & { tags: Tag[] })[] = []
   let totalCount = 0
 
   if (dbUser) {
