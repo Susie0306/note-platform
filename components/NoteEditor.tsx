@@ -2,8 +2,7 @@
 
 import React, { useEffect, useRef, useState, useTransition } from 'react'
 import { Cloud, CloudOff, HardDrive, Save } from 'lucide-react'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
+import { Editor } from 'slate'
 import { toast } from 'sonner'
 import { useDebouncedCallback } from 'use-debounce'
 
@@ -18,6 +17,7 @@ import { TagInput } from '@/components/TagInput'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { PlateEditor } from '@/components/plate-editor'
 import { updateNote } from '@/app/actions/notes'
 
 interface NoteEditorProps {
@@ -44,6 +44,7 @@ export function NoteEditor({
   const [saveLocation, setSaveLocation] = useState<'cloud' | 'local' | null>(null)
 
   const isMounted = useRef(false)
+  const editorRef = useRef<any>(null)
 
   // 核心保存逻辑
   const performSave = async (
@@ -128,6 +129,9 @@ export function NoteEditor({
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [title, content, tags])
 
+  const toggleMark = (_: string) => {}
+  const setBlockType = (_: string) => {}
+
   return (
     <div className="flex h-[calc(100dvh-130px)] flex-col space-y-4">
       <div className="flex flex-col gap-2">
@@ -175,18 +179,9 @@ export function NoteEditor({
         <TagInput tags={tags} setTags={setTags} />
       </div>
 
-      <div className="flex flex-1 gap-4 overflow-hidden rounded-lg border bg-white shadow-sm dark:bg-zinc-950">
-        <div className="h-full w-1/2 border-r bg-gray-50 dark:bg-zinc-900/50">
-          <Textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="开始用 Markdown 写作..."
-            className="h-full w-full resize-none border-none bg-transparent p-4 font-mono text-sm focus-visible:ring-0"
-          />
-        </div>
-
-        <div className="prose prose-slate dark:prose-invert h-full w-1/2 max-w-none overflow-y-auto p-8">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{content || '*预览区域*'}</ReactMarkdown>
+      <div className="flex flex-1 overflow-hidden rounded-lg border bg-white shadow-sm dark:bg-zinc-950">
+        <div className="h-full w-full overflow-y-auto">
+          <PlateEditor initialMarkdown={content} onChange={(md) => setContent(md)} />
         </div>
       </div>
     </div>

@@ -3,6 +3,8 @@
 @plugin 'tailwindcss-animate';
 @plugin '@tailwindcss/typography';
 
+@plugin 'tailwind-scrollbar-hide';
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -38,6 +40,8 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --color-highlight: var(--highlight);
+  --color-brand: var(--brand);
 }
 
 /* 基础外观 (Neutral / Slate) - 纯净黑白 */
@@ -70,6 +74,8 @@
   --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
   --sidebar-border: oklch(0.929 0.013 255.508);
   --sidebar-ring: oklch(0.704 0.04 256.788);
+  --highlight: oklch(0.852 0.199 91.936);
+  --brand: oklch(0.623 0.214 259.815);
 }
 
 .dark {
@@ -100,6 +106,8 @@
   --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
   --sidebar-border: oklch(0.279 0.041 260.031);
   --sidebar-ring: oklch(0.446 0.043 257.281);
+  --highlight: oklch(0.852 0.199 91.936);
+  --brand: oklch(0.707 0.165 254.624);
 }
 
 /* 沉浸式主题 (全屏染色) */
