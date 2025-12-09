@@ -2,22 +2,20 @@
 
 import React, { useEffect, useRef, useState, useTransition } from 'react'
 import { Cloud, CloudOff, HardDrive, Save } from 'lucide-react'
-import { Editor } from 'slate'
 import { toast } from 'sonner'
 import { useDebouncedCallback } from 'use-debounce'
 
-// 引入本地数据库工具
 import {
   enqueueSyncTask,
   saveNoteToLocal,
   type NoteData,
   type NoteUpdatePayload,
 } from '@/lib/indexeddb'
+// ✅ 引用新的、优化后的编辑器组件
+import { PlateEditor } from '@/components/editor/plate-editor'
 import { TagInput } from '@/components/TagInput'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { PlateEditor } from '@/components/plate-editor'
 import { updateNote } from '@/app/actions/notes'
 
 interface NoteEditorProps {
@@ -35,48 +33,38 @@ export function NoteEditor({
   initialTags,
   initialCreatedAt,
 }: NoteEditorProps) {
+  // 状态管理
   const [title, setTitle] = useState(initialTitle || '')
   const [content, setContent] = useState(initialContent || '')
   const [tags, setTags] = useState<string[]>(initialTags || [])
 
+  // 保存状态
   const [isSaving, startTransition] = useTransition()
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [saveLocation, setSaveLocation] = useState<'cloud' | 'local' | null>(null)
 
   const isMounted = useRef(false)
-  const editorRef = useRef<any>(null)
 
-  // 核心保存逻辑
-  const performSave = async (
-    currentTitle: string,
-    currentContent: string,
-    currentTags: string[]
-  ) => {
+  // --- 保存逻辑 (保持不变，省略部分注释以精简) ---
+  const performSave = async (title: string, content: string, tags: string[]) => {
     const now = new Date()
-
     const noteData: NoteData = {
       id: noteId,
-      title: currentTitle,
-      content: currentContent,
-      tags: currentTags.map((name) => ({ id: 'local-temp', name })),
+      title,
+      content,
+      tags: tags.map((name) => ({ id: 'local', name })),
       createdAt: initialCreatedAt,
       updatedAt: now,
     }
-
-    const payload: NoteUpdatePayload = {
-      title: currentTitle,
-      content: currentContent,
-      tags: currentTags,
-    }
+    const payload: NoteUpdatePayload = { title, content, tags }
 
     if (navigator.onLine) {
       try {
-        await updateNote(noteId, currentTitle, currentContent, currentTags)
+        await updateNote(noteId, title, content, tags)
         await saveNoteToLocal(noteData)
         setSaveLocation('cloud')
         setLastSaved(now)
       } catch (error) {
-        console.error('云端保存失败，尝试降级到本地...', error)
         await fallbackToLocal(noteData, payload)
       }
     } else {
@@ -91,33 +79,29 @@ export function NoteEditor({
       setSaveLocation('local')
       setLastSaved(new Date())
     } catch (err) {
-      console.error('本地保存失败', err)
-      toast.error('保存失败：无法写入本地存储')
+      toast.error('本地保存失败')
     }
   }
 
-  const debouncedSave = useDebouncedCallback((t: string, c: string, tg: string[]) => {
+  const debouncedSave = useDebouncedCallback((t, c, tg) => {
     if (!isMounted.current) return
     startTransition(() => performSave(t, c, tg))
   }, 1000)
 
   useEffect(() => {
-    if (isMounted.current) {
-      debouncedSave(title, content, tags)
-    } else {
-      isMounted.current = true
-    }
+    if (isMounted.current) debouncedSave(title, content, tags)
+    else isMounted.current = true
   }, [title, content, tags, debouncedSave])
 
   const handleManualSave = () => {
     debouncedSave.cancel()
     startTransition(async () => {
       await performSave(title, content, tags)
-      toast.success(navigator.onLine ? '已保存到云端' : '已保存到本地')
+      toast.success(navigator.onLine ? '已保存' : '已存本地')
     })
   }
 
-  // 快捷键
+  // 快捷键 Ctrl+S
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
@@ -129,27 +113,24 @@ export function NoteEditor({
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [title, content, tags])
 
-  const toggleMark = (_: string) => {}
-  const setBlockType = (_: string) => {}
-
   return (
     <div className="flex h-[calc(100dvh-130px)] flex-col space-y-4">
+      {/* 顶部元数据栏 */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between gap-4">
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="输入笔记标题..."
-            className="placeholder:text-muted-foreground/70 h-auto border-none px-0 text-4xl font-bold shadow-none focus-visible:ring-0"
+            placeholder="无标题笔记"
+            className="placeholder:text-muted-foreground/50 h-auto border-none px-0 text-4xl font-bold shadow-none focus-visible:ring-0"
           />
           <div className="flex items-center gap-2 text-sm text-gray-400">
             {isSaving ? (
               <span className="flex items-center gap-1 text-blue-500">
-                <Cloud className="h-4 w-4 animate-pulse" />
-                保存中...
+                <Cloud className="h-4 w-4 animate-pulse" /> 保存中...
               </span>
             ) : lastSaved ? (
-              <span className="flex items-center gap-1 transition-colors duration-500">
+              <span className="flex items-center gap-1">
                 {saveLocation === 'local' ? (
                   <HardDrive className="h-4 w-4 text-orange-500" />
                 ) : (
@@ -159,11 +140,9 @@ export function NoteEditor({
               </span>
             ) : (
               <span className="flex items-center gap-1">
-                <CloudOff className="h-4 w-4" />
-                未保存
+                <CloudOff className="h-4 w-4" /> 未保存
               </span>
             )}
-
             <Button
               onClick={handleManualSave}
               disabled={isSaving}
@@ -171,16 +150,17 @@ export function NoteEditor({
               size="sm"
               className="ml-2"
             >
-              <Save className="mr-2 h-4 w-4" />
-              保存
+              <Save className="mr-2 h-4 w-4" /> 保存
             </Button>
           </div>
         </div>
         <TagInput tags={tags} setTags={setTags} />
       </div>
 
+      {/* 编辑器主体 */}
       <div className="flex flex-1 overflow-hidden rounded-lg border bg-white shadow-sm dark:bg-zinc-950">
         <div className="h-full w-full overflow-y-auto">
+          {/* ✅ 核心集成点：数据双向绑定 */}
           <PlateEditor initialMarkdown={content} onChange={(md) => setContent(md)} />
         </div>
       </div>

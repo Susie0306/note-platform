@@ -2,13 +2,14 @@ import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
   transpilePackages: [
-    '@udecode/plate-common',
-    '@udecode/plate-basic-marks',
-    '@udecode/plate-heading',
-    '@udecode/plate-block-quote',
-    '@udecode/plate-list',
-    '@udecode/plate-paragraph',
-    '@udecode/plate-serializer-md',
+    'platejs',
+    '@platejs/core',
+    '@platejs/utils',
+    '@platejs/slate',
+    '@platejs/basic-nodes',
+    '@platejs/markdown',
+    '@platejs/list',
+    '@platejs/autoformat',
   ],
 }
 
