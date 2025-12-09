@@ -1,17 +1,32 @@
 'use client'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useMemo } from 'react'
-// ✅ 1. 只保留这两个核心包，移除所有 plugin 包的引用
-import { withProps } from '@udecode/cn'
+import React, { useEffect, useMemo, useRef } from 'react'
 import {
+  createBoldPlugin,
+  createItalicPlugin,
+  createStrikethroughPlugin,
+  createUnderlinePlugin,
+  MARK_BOLD,
+  MARK_ITALIC,
+  MARK_STRIKETHROUGH,
+  MARK_UNDERLINE,
+} from '@udecode/plate-basic-marks'
+import { createBlockquotePlugin, ELEMENT_BLOCKQUOTE } from '@udecode/plate-block-quote'
+import {
+  createPlateEditor,
+  createPlugins,
   Plate,
   PlateContent,
-  PlateElement,
-  PlateLeaf,
-  usePlateEditor,
   type PlateEditor as PlateEditorType,
-} from '@udecode/plate-common/react'
+  type PlatePlugin,
+  type TElement,
+  type Value,
+} from '@udecode/plate-common'
+import { createHeadingPlugin, ELEMENT_H1, ELEMENT_H2 } from '@udecode/plate-heading'
+import { createListPlugin, ELEMENT_OL, ELEMENT_UL } from '@udecode/plate-list'
+import { createParagraphPlugin, ELEMENT_PARAGRAPH } from '@udecode/plate-paragraph'
+import { deserializeMd, serializeMd } from '@udecode/plate-serializer-md'
 import {
   Bold,
   Heading1,
@@ -24,48 +39,29 @@ import {
   Underline,
   type LucideIcon,
 } from 'lucide-react'
+// 引入 Slate 核心库
+import { Editor, Element as SlateElement, Transforms } from 'slate'
+// 引入 ReactEditor
+import { ReactEditor } from 'slate-react'
 
 import { cn } from '@/lib/utils'
+import { AIAssistant } from '@/components/AIAssistant'
 import { Button } from '@/components/ui/button'
 
-// --- 2. 常量定义 ---
-const ELEMENT_PARAGRAPH = 'p'
-const ELEMENT_H1 = 'h1'
-const ELEMENT_H2 = 'h2'
-const ELEMENT_BLOCKQUOTE = 'blockquote'
-const ELEMENT_UL = 'ul'
-const ELEMENT_OL = 'ol'
-const ELEMENT_LI = 'li' // 列表项
+const plugins = createPlugins([
+  createParagraphPlugin(),
+  createHeadingPlugin(),
+  createBlockquotePlugin(),
+  createListPlugin(),
+  createBoldPlugin(),
+  createItalicPlugin(),
+  createUnderlinePlugin(),
+  createStrikethroughPlugin(),
+])
 
-const MARK_BOLD = 'bold'
-const MARK_ITALIC = 'italic'
-const MARK_UNDERLINE = 'underline'
-const MARK_STRIKETHROUGH = 'strikethrough'
-
-// --- 3. 手动定义插件 (Zero-Dependency) ---
-// 我们不再 import ParagraphPlugin，而是自己定义一个配置对象
-// 这能 100% 避免 build error，因为根本没有引入外部文件
-const plugins: any[] = [
-  // Block 元素
-  { key: ELEMENT_PARAGRAPH, isElement: true },
-  { key: ELEMENT_H1, isElement: true },
-  { key: ELEMENT_H2, isElement: true },
-  { key: ELEMENT_BLOCKQUOTE, isElement: true },
-  { key: ELEMENT_UL, isElement: true },
-  { key: ELEMENT_OL, isElement: true },
-  { key: ELEMENT_LI, isElement: true },
-
-  // Mark 样式 (加粗、斜体等)
-  { key: MARK_BOLD, isLeaf: true },
-  { key: MARK_ITALIC, isLeaf: true },
-  { key: MARK_UNDERLINE, isLeaf: true },
-  { key: MARK_STRIKETHROUGH, isLeaf: true },
-]
-
-// --- 4. 手写简易解析器 ---
-const manualDeserialize = (md: string) => {
+// 智能容错解析器
+const safeDeserialize = (md: string) => {
   if (!md) return [{ type: ELEMENT_PARAGRAPH, children: [{ text: '' }] }]
-
   return md.split('\n').map((line) => {
     const text = line.trim()
     if (text.startsWith('# '))
@@ -74,37 +70,15 @@ const manualDeserialize = (md: string) => {
       return { type: ELEMENT_H2, children: [{ text: text.replace('## ', '') }] }
     if (text.startsWith('> '))
       return { type: ELEMENT_BLOCKQUOTE, children: [{ text: text.replace('> ', '') }] }
-    if (text.startsWith('- '))
+    if (text.startsWith('- ') || text.startsWith('* '))
       return {
         type: ELEMENT_UL,
-        children: [{ type: ELEMENT_LI, children: [{ text: text.replace('- ', '') }] }],
+        children: [{ type: 'li', children: [{ text: text.replace(/^[-*] /, '') }] }],
       }
-    // 注意：简易列表不支持嵌套，这里简化处理
     return { type: ELEMENT_PARAGRAPH, children: [{ text: line }] }
   })
 }
 
-const manualSerialize = (nodes: any[]) => {
-  return nodes
-    .map((node) => {
-      const text = node.children?.map((c: any) => c.text).join('') || ''
-      switch (node.type) {
-        case ELEMENT_H1:
-          return `# ${text}`
-        case ELEMENT_H2:
-          return `## ${text}`
-        case ELEMENT_BLOCKQUOTE:
-          return `> ${text}`
-        case ELEMENT_UL:
-          return `- ${text}` // 简易序列化
-        default:
-          return text
-      }
-    })
-    .join('\n')
-}
-
-// --- 工具栏组件 ---
 interface ToolbarButtonProps {
   format: string
   icon: LucideIcon
@@ -118,14 +92,30 @@ const ToolbarButton = ({ format, icon: Icon, editor, type = 'mark' }: ToolbarBut
       variant="ghost"
       size="sm"
       className={cn('h-8 w-8 p-0')}
-      onClick={(e) => {
+      onMouseDown={(e) => {
         e.preventDefault()
-        e.stopPropagation()
+
+        // 使用原生 Slate API 进行操作
+        const slateEditor = editor as unknown as ReactEditor
 
         if (type === 'mark') {
-          ;(editor as any).tf.toggle.mark({ key: format })
+          const marks = Editor.marks(slateEditor)
+          // 使用 (marks as any) 避免 TS 报错
+          const isActive = marks ? (marks as any)[format] === true : false
+
+          if (isActive) {
+            Editor.removeMark(slateEditor, format)
+          } else {
+            Editor.addMark(slateEditor, format, true)
+          }
         } else {
-          ;(editor as any).tf.toggle.block({ type: format })
+          Transforms.setNodes(
+            slateEditor,
+            // ✅ 修复：将属性对象整体断言为 any
+            // 这告诉 TS：允许传递 type 属性，即使类型定义里看起来没有
+            { type: format } as any,
+            { match: (n) => SlateElement.isElement(n) && Editor.isBlock(slateEditor, n) }
+          )
         }
       }}
     >
@@ -160,61 +150,56 @@ interface PlateEditorProps {
 }
 
 export function PlateEditor({ initialMarkdown, onChange }: PlateEditorProps) {
-  const initialValue = useMemo(() => {
+  const initialValue = useMemo<Value>(() => {
     return [{ type: ELEMENT_PARAGRAPH, children: [{ text: '' }] }]
   }, [])
 
-  const editor = usePlateEditor({
-    plugins,
-    value: initialValue,
-    // ✅ 5. 关键：手动告诉 Plate 每个 Key 对应什么 HTML 标签
-    override: {
-      components: {
-        // Block 渲染
-        [ELEMENT_PARAGRAPH]: withProps(PlateElement, { as: 'p', className: 'mb-4' }),
-        [ELEMENT_H1]: withProps(PlateElement, {
-          as: 'h1',
-          className: 'text-3xl font-bold mb-4 mt-6',
-        }),
-        [ELEMENT_H2]: withProps(PlateElement, {
-          as: 'h2',
-          className: 'text-2xl font-bold mb-2 mt-4',
-        }),
-        [ELEMENT_BLOCKQUOTE]: withProps(PlateElement, {
-          as: 'blockquote',
-          className: 'border-l-4 border-gray-300 pl-4 italic my-4',
-        }),
-        [ELEMENT_UL]: withProps(PlateElement, { as: 'ul', className: 'list-disc pl-6 mb-4' }),
-        [ELEMENT_OL]: withProps(PlateElement, { as: 'ol', className: 'list-decimal pl-6 mb-4' }),
-        [ELEMENT_LI]: withProps(PlateElement, { as: 'li', className: 'mb-1' }),
+  const editor = useMemo(() => {
+    return createPlateEditor({ plugins })
+  }, [])
 
-        // Mark 渲染 (Bold, Italic 等)
-        [MARK_BOLD]: withProps(PlateLeaf, { as: 'strong' }),
-        [MARK_ITALIC]: withProps(PlateLeaf, { as: 'em' }),
-        [MARK_UNDERLINE]: withProps(PlateLeaf, { as: 'u' }),
-        [MARK_STRIKETHROUGH]: withProps(PlateLeaf, { as: 's' }),
-      },
-    },
-  })
-
+  const isLoaded = useRef(false)
   useEffect(() => {
-    if (initialMarkdown && editor) {
+    if (!isLoaded.current && initialMarkdown && editor) {
+      let nodes
       try {
-        const nodes = manualDeserialize(initialMarkdown)
-        ;(editor as any).tf.setValue(nodes)
+        nodes = deserializeMd(editor, initialMarkdown)
       } catch (e) {
-        console.warn('Deserialize failed', e)
+        nodes = safeDeserialize(initialMarkdown)
       }
+
+      if (nodes && nodes.length > 0) {
+        Object.assign(editor, { children: nodes })
+        editor.onChange()
+      }
+      isLoaded.current = true
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editor])
+  }, [initialMarkdown, editor])
+
+  // 定义两个辅助函数传给 AI 组件
+
+  // 1. 获取当前 Markdown 内容
+  const getContent = () => {
+    // 使用 as any 绕过类型检查，获取当前值序列化后的 Markdown
+    const nodes = editor.children
+    return serializeMd(editor, { nodes: nodes as any })
+  }
+
+  // 2. 插入 AI 生成的文本
+  const handleInsert = (text: string) => {
+    // 在光标处插入文本
+    editor.insertText(text)
+    // 或者你可以选择插入一个新的段落：
+    // editor.insertNode({ type: ELEMENT_PARAGRAPH, children: [{ text }] });
+  }
 
   return (
     <div className="bg-background flex h-full flex-col overflow-hidden rounded-md border shadow-sm">
       <Plate
         editor={editor}
-        onChange={({ value }) => {
-          const md = manualSerialize(value as any)
+        initialValue={initialValue}
+        onChange={(newValue) => {
+          const md = serializeMd(editor, { nodes: newValue as any })
           onChange(md)
         }}
       >
@@ -223,13 +208,14 @@ export function PlateEditor({ initialMarkdown, onChange }: PlateEditorProps) {
         <div
           className="flex-1 cursor-text overflow-y-auto p-4 md:p-6"
           onClick={() => {
-            ;(editor as any).tf.focus()
+            ReactEditor.focus(editor as any)
           }}
         >
           <PlateContent
-            placeholder="开始输入内容..."
+            placeholder="开始写作..."
             className="prose prose-slate dark:prose-invert min-h-full max-w-none outline-none"
           />
+          <AIAssistant getContent={getContent} onInsert={handleInsert} />
         </div>
       </Plate>
     </div>

@@ -1,63 +1,63 @@
 import { DBSchema, IDBPDatabase, openDB } from 'idb'
 
-// 定义 Tag 类型 (对应 Prisma 返回的结构)
+// 定义 Tag 类型
 export interface Tag {
   id: string
   name: string
 }
 
-// 定义完整笔记类型 (用于本地存储副本)
+// 定义完整笔记类型
 export interface NoteData {
   id: string
   title: string
-  content: string | null // Prisma 中 content 可能是 null
-  tags: Tag[] // 存储完整的 Tag 对象数组
+  content: string | null
+  tags: Tag[]
   createdAt: Date
   updatedAt: Date
 }
 
-// 定义更新操作的 Payload (用于同步队列，只包含用户修改的字段)
+// 定义更新 Payload
 export interface NoteUpdatePayload {
   title: string
   content: string
-  tags: string[] // 用户编辑时只提交标签名的数组
+  tags: string[]
+}
+
+// 提取并导出 SyncTask 接口，供 SyncManager 使用
+export interface SyncTask {
+  id?: number // IndexedDB 自动生成的 Key
+  type: 'CREATE' | 'UPDATE' | 'DELETE'
+  noteId: string
+  payload?: NoteUpdatePayload
+  createdAt: number
 }
 
 // 定义数据库结构
 interface XiJiDB extends DBSchema {
   notes: {
-    key: string // 笔记 ID
-    value: NoteData & { isSynced: boolean } // 交叉类型：笔记数据 + 同步状态
+    key: string
+    value: NoteData & { isSynced: boolean }
     indexes: { 'by-updated': Date }
   }
   syncQueue: {
-    key: number // 自增 ID
-    value: {
-      id?: number
-      type: 'CREATE' | 'UPDATE' | 'DELETE'
-      noteId: string
-      payload?: NoteUpdatePayload
-      createdAt: number
-    }
+    key: number
+    value: SyncTask // 使用上面定义的接口
   }
 }
 
 const DB_NAME = 'xiji-db'
 const DB_VERSION = 1
 
-// 初始化数据库单例
 let dbPromise: Promise<IDBPDatabase<XiJiDB>>
 
 export function getDB() {
   if (!dbPromise) {
     dbPromise = openDB<XiJiDB>(DB_NAME, DB_VERSION, {
       upgrade(db) {
-        // 创建笔记存储表
         if (!db.objectStoreNames.contains('notes')) {
           const store = db.createObjectStore('notes', { keyPath: 'id' })
           store.createIndex('by-updated', 'updatedAt')
         }
-        // 创建同步队列表
         if (!db.objectStoreNames.contains('syncQueue')) {
           db.createObjectStore('syncQueue', { keyPath: 'id', autoIncrement: true })
         }
@@ -67,18 +67,16 @@ export function getDB() {
   return dbPromise
 }
 
-// --- 基础操作封装 ---
+// 基础操作
 
-// 保存笔记到本地 (通常在从服务器获取数据后调用)
 export async function saveNoteToLocal(note: NoteData) {
   const db = await getDB()
   await db.put('notes', {
     ...note,
-    isSynced: true, // 默认为已同步
+    isSynced: true,
   })
 }
 
-// 批量保存 (用于列表页缓存)
 export async function saveNotesToLocal(notes: NoteData[]) {
   const db = await getDB()
   const tx = db.transaction('notes', 'readwrite')
@@ -86,19 +84,17 @@ export async function saveNotesToLocal(notes: NoteData[]) {
   await tx.done
 }
 
-// 获取单条本地笔记
 export async function getLocalNote(id: string) {
   const db = await getDB()
   return db.get('notes', id)
 }
 
-// 获取所有本地笔记
 export async function getAllLocalNotes() {
   const db = await getDB()
   return db.getAllFromIndex('notes', 'by-updated')
 }
 
-// 加入同步队列 (离线操作时调用)
+// 加入同步队列
 export async function enqueueSyncTask(
   type: 'CREATE' | 'UPDATE' | 'DELETE',
   noteId: string,
@@ -113,12 +109,26 @@ export async function enqueueSyncTask(
   })
 }
 
-// 获取并清空队列 (网络恢复时调用)
+// 获取所有同步任务 (不删除)
+// 用于 SyncManager 查看有哪些任务需要处理
+export async function getAllSyncTasks() {
+  const db = await getDB()
+  return db.getAll('syncQueue')
+}
+
+// 移除单个同步任务
+// 用于 SyncManager 在任务成功同步到服务器后调用
+export async function removeSyncTask(id: number) {
+  const db = await getDB()
+  await db.delete('syncQueue', id)
+}
+
+// (旧方法，保留兼容性，但 SyncManager 应该改用 getAll + remove 的组合以保证安全)
 export async function popSyncQueue() {
   const db = await getDB()
   const tx = db.transaction('syncQueue', 'readwrite')
   const items = await tx.store.getAll()
-  await tx.store.clear() // 获取后立即清空，防止重复处理
+  await tx.store.clear()
   await tx.done
   return items
 }

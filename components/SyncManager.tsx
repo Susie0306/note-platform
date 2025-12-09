@@ -1,29 +1,70 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useAuth } from '@clerk/nextjs'
-import { RefreshCw, Wifi, WifiOff } from 'lucide-react'
+import { Loader2, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { popSyncQueue, saveNotesToLocal } from '@/lib/indexeddb'
-import { createNote, deleteNote, updateNote } from '@/app/actions/notes' // 引入现有的 Server Actions
-
-// 注意：我们需要一个新的 Server Action 来获取所有笔记用于缓存，稍后创建
+import { getAllSyncTasks, removeSyncTask, type SyncTask } from '@/lib/indexeddb'
+import { deleteNote, updateNote } from '@/app/actions/notes'
 
 export function SyncManager() {
-  const [isOnline, setIsOnline] = useState(true)
   const [isSyncing, setIsSyncing] = useState(false)
-  const { isSignedIn } = useAuth()
+  const [isOnline, setIsOnline] = useState(true)
 
-  // 监听网络状态
+  const processQueue = async () => {
+    if (isSyncing) return
+    setIsSyncing(true)
+
+    try {
+      // 1. 获取所有待同步任务 (只读取，不删除)
+      const tasks = await getAllSyncTasks()
+
+      if (tasks.length === 0) {
+        setIsSyncing(false)
+        return
+      }
+
+      console.log(`发现 ${tasks.length} 个离线任务，开始同步...`)
+      let processedCount = 0
+
+      for (const task of tasks) {
+        try {
+          // 2. 根据任务类型执行操作
+          if (task.type === 'UPDATE' && task.payload) {
+            const { title, content, tags } = task.payload
+            await updateNote(task.noteId, title, content, tags)
+          } else if (task.type === 'DELETE') {
+            await deleteNote(task.noteId)
+          }
+
+          // 3. 只有同步成功了，才从 IndexedDB 移除该任务
+          if (task.id) {
+            await removeSyncTask(task.id)
+            processedCount++
+          }
+        } catch (err) {
+          console.error(`任务 ${task.id} 同步失败，保留在队列中:`, err)
+          // 失败的任务会保留在 DB 中，等待下一次联网时重试
+        }
+      }
+
+      if (processedCount > 0) {
+        toast.success(`已同步 ${processedCount} 项离线变更`)
+      }
+    } catch (error) {
+      console.error('同步过程发生错误:', error)
+    } finally {
+      setIsSyncing(false)
+    }
+  }
+
   useEffect(() => {
-    // 初始化状态
     setIsOnline(navigator.onLine)
 
     const handleOnline = () => {
       setIsOnline(true)
-      toast.success('网络已连接，正在同步...')
-      processQueue() // 网络恢复，立即处理队列
+      toast.info('网络已恢复，正在同步数据...')
+      processQueue()
     }
 
     const handleOffline = () => {
@@ -34,70 +75,35 @@ export function SyncManager() {
     window.addEventListener('online', handleOnline)
     window.addEventListener('offline', handleOffline)
 
+    // 组件挂载时，如果在线，尝试同步一次
+    if (navigator.onLine) {
+      processQueue()
+    }
+
     return () => {
       window.removeEventListener('online', handleOnline)
       window.removeEventListener('offline', handleOffline)
     }
   }, [])
 
-  // 处理同步队列的核心逻辑
-  const processQueue = async () => {
-    if (isSyncing) return
-    setIsSyncing(true)
-
-    try {
-      const queue = await popSyncQueue()
-      if (queue.length === 0) {
-        setIsSyncing(false)
-        return
-      }
-
-      console.log(`正在处理 ${queue.length} 个离线任务...`)
-
-      for (const task of queue) {
-        try {
-          if (task.type === 'UPDATE') {
-            // 先检查 payload 是否存在
-            if (task.payload) {
-              const { title, content, tags } = task.payload
-              await updateNote(task.noteId, title, content, tags)
-            }
-          } else if (task.type === 'DELETE') {
-            await deleteNote(task.noteId)
-          }
-        } catch (err) {
-          console.error('同步任务失败:', task, err)
-        }
-      }
-
-      toast.success('所有离线操作已同步！')
-    } catch (error) {
-      console.error('同步过程出错', error)
-    } finally {
-      setIsSyncing(false)
-    }
+  // UI 渲染逻辑
+  if (!isOnline) {
+    return (
+      <div className="fixed right-4 bottom-4 z-50 flex items-center gap-2 rounded-full bg-orange-500 px-4 py-2 text-xs text-white shadow-lg">
+        <RefreshCw className="h-3 w-3 animate-spin" />
+        离线模式
+      </div>
+    )
   }
-  // 简单的 UI 反馈 (显示在右下角)
-  if (!isSignedIn) return null
 
-  return (
-    <div className="bg-background/80 fixed right-4 bottom-4 z-50 flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium shadow-lg backdrop-blur">
-      {isSyncing ? (
-        <>
-          <RefreshCw className="h-3 w-3 animate-spin text-blue-500" />
-          <span>同步中...</span>
-        </>
-      ) : isOnline ? (
-        <>
-          <Wifi className="h-3 w-3 text-green-500" />
-          <span className="text-muted-foreground">已连接</span>
-        </>
-      ) : (
-        <>
-          <WifiOff className="h-3 w-3 text-red-500" />
-          <span className="text-red-500">离线模式</span>
-        </>
-      )}
-    </div>
-  )
+  if (isSyncing) {
+    return (
+      <div className="fixed right-4 bottom-4 z-50 flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-xs text-white shadow-lg">
+        <Loader2 className="h-3 w-3 animate-spin" />
+        正在同步...
+      </div>
+    )
+  }
+
+  return null
 }

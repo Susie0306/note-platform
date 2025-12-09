@@ -2,19 +2,22 @@
 
 import React, { useEffect, useRef, useState, useTransition } from 'react'
 import { Cloud, CloudOff, HardDrive, Save } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { toast } from 'sonner'
 import { useDebouncedCallback } from 'use-debounce'
 
+// 引入本地数据库工具
 import {
   enqueueSyncTask,
   saveNoteToLocal,
   type NoteData,
   type NoteUpdatePayload,
 } from '@/lib/indexeddb'
-import { PlateEditor } from '@/components/PlateEditor'
 import { TagInput } from '@/components/TagInput'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { updateNote } from '@/app/actions/notes'
 
 interface NoteEditorProps {
@@ -33,10 +36,7 @@ export function NoteEditor({
   initialCreatedAt,
 }: NoteEditorProps) {
   const [title, setTitle] = useState(initialTitle || '')
-
-  // content 依然存的是 Markdown 字符串，保持了和后端的兼容性
   const [content, setContent] = useState(initialContent || '')
-
   const [tags, setTags] = useState<string[]>(initialTags || [])
 
   const [isSaving, startTransition] = useTransition()
@@ -90,11 +90,11 @@ export function NoteEditor({
       setSaveLocation('local')
       setLastSaved(new Date())
     } catch (err) {
+      console.error('本地保存失败', err)
       toast.error('保存失败：无法写入本地存储')
     }
   }
 
-  // 防抖保存
   const debouncedSave = useDebouncedCallback((t: string, c: string, tg: string[]) => {
     if (!isMounted.current) return
     startTransition(() => performSave(t, c, tg))
@@ -116,7 +116,7 @@ export function NoteEditor({
     })
   }
 
-  // 快捷键保存
+  // 快捷键
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
@@ -130,7 +130,6 @@ export function NoteEditor({
 
   return (
     <div className="flex h-[calc(100dvh-130px)] flex-col space-y-4">
-      {/* 顶部区域 */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between gap-4">
           <Input
@@ -176,9 +175,19 @@ export function NoteEditor({
         <TagInput tags={tags} setTags={setTags} />
       </div>
 
-      <div className="h-full min-h-0 flex-1">
-        {' '}
-        <PlateEditor initialMarkdown={initialContent} onChange={setContent} />
+      <div className="flex flex-1 gap-4 overflow-hidden rounded-lg border bg-white shadow-sm dark:bg-zinc-950">
+        <div className="h-full w-1/2 border-r bg-gray-50 dark:bg-zinc-900/50">
+          <Textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="开始用 Markdown 写作..."
+            className="h-full w-full resize-none border-none bg-transparent p-4 font-mono text-sm focus-visible:ring-0"
+          />
+        </div>
+
+        <div className="prose prose-slate dark:prose-invert h-full w-1/2 max-w-none overflow-y-auto p-8">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{content || '*预览区域*'}</ReactMarkdown>
+        </div>
       </div>
     </div>
   )
