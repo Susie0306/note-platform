@@ -10,6 +10,9 @@
 **关于 NPX 命令执行**：
 由于当前开发环境配置特殊，**所有涉及 `npx` 的命令（如 `npx prisma generate`, `npx prisma db push` 等）必须由用户在终端手动执行**。AI 助手不能直接运行这些命令。
 
+**协同编辑环境变量**：
+已接入 Liveblocks + Yjs 协同，需在环境变量中配置 `LIVEBLOCKS_SECRET_KEY`，前端通过 `/api/liveblocks-auth` 获取令牌。
+
 ---
 
 ## 1. 产品文档
@@ -58,6 +61,7 @@
 - [x] **PlateJS 集成**：替换了原有的 Markdown 编辑器，实现所见即所得。
 - [x] **工具栏重构**：完全使用 Plate UI 组件 (`FixedToolbar`, `MarkToolbarButton`)，支持加粗、斜体、列表等基础格式。
 - [x] **GFM 支持**：配置 `remark-gfm`，修复了 strikethrough (`delete`) 节点解析报错的问题。
+- [x] **实时协同 (MVP)**：接入 **Liveblocks + Yjs**，Note 编辑器支持多人同时编辑、在线状态/光标同步；RoomProvider + Plate Yjs 插件封装完成。
 
 #### C. 特色功能：心愿追踪
 - [x] **数据库**：新增 `Wish` (心愿) 和 `WishLog` (心愿日志) 表。

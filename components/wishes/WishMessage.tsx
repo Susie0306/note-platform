@@ -45,3 +45,12 @@ export function WishMessage({ wishTitle }: WishMessageProps) {
   )
 }
 
+
+
+
+
+
+
+
+
+

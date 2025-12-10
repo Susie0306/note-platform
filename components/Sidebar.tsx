@@ -123,7 +123,7 @@ export function Sidebar({ className, onNavClick }: SidebarProps) {
 export function MobileNav() {
   const [open, setOpen] = useState(false)
   return (
-    <div className="flex items-center border-b p-4 md:hidden">
+    <div className="flex items-center border-b bg-background/80 p-4 backdrop-blur-md md:hidden">
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
           <Button variant="ghost" size="icon" className="mr-2">

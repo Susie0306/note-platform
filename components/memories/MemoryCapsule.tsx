@@ -7,6 +7,8 @@ import { zhCN } from 'date-fns/locale'
 import { Mail, Sparkles, X } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -24,6 +26,7 @@ interface MemoryCapsuleProps {
 export function MemoryCapsule({ memory }: MemoryCapsuleProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isVisible, setIsVisible] = useState(true)
+  const router = useRouter()
 
   if (!memory || !isVisible) return null
 
@@ -65,11 +68,11 @@ export function MemoryCapsule({ memory }: MemoryCapsuleProps) {
       </div>
 
       {/* 回忆卡片弹窗 */}
-      <Dialog open={isOpen} onOpenChange={setOpen}>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="max-w-md overflow-hidden border-none bg-transparent p-0 shadow-none sm:max-w-lg">
           <div className="relative overflow-hidden rounded-2xl bg-[#fffef9] shadow-2xl">
-            {/* 信纸纹理背景 */}
-            <div className="absolute inset-0 opacity-50" 
+            {/* 信纸纹理背景 - 添加 pointer-events-none 防止遮挡点击 */}
+            <div className="pointer-events-none absolute inset-0 opacity-50" 
                  style={{ backgroundImage: 'radial-gradient(#e5e7eb 1px, transparent 1px)', backgroundSize: '20px 20px' }} 
             />
             
@@ -81,9 +84,9 @@ export function MemoryCapsule({ memory }: MemoryCapsuleProps) {
                   <Sparkles className="h-3 w-3" />
                   Memory Capsule
                 </span>
-                <h3 className="font-serif text-2xl font-bold text-gray-800">
+                <DialogTitle className="font-serif text-2xl font-bold text-gray-800">
                   {memory.type === 'anniversary' ? '那年今日' : '时光漫游'}
-                </h3>
+                </DialogTitle>
                 <p className="text-sm text-gray-500">
                   {new Date(memory.createdAt).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })}
                   {' · '}
@@ -102,18 +105,18 @@ export function MemoryCapsule({ memory }: MemoryCapsuleProps) {
               </div>
             </div>
 
-            {/* 底部互动 */}
-            <div className="bg-gray-50 px-6 py-4 text-center">
+            {/* 底部互动 - 添加 relative z-10 确保在最上层 */}
+            <div className="relative z-10 bg-gray-50 px-6 py-4 text-center">
               <p className="mb-3 text-xs italic text-gray-400">
                 "此刻的你，想对那时的自己说些什么？"
               </p>
               <Button 
                 className="w-full bg-yellow-500 hover:bg-yellow-600 text-white"
                 onClick={() => {
-                   // 未来可以跳转到笔记详情页并定位到评论区
+                   console.log('Navigating to note:', memory.id)
                    setIsOpen(false)
-                   // 这里可以加一个简单的 toast 互动
-                   import('sonner').then(mod => mod.toast.success('已收到你的跨时空回信 📨'))
+                   toast.success('已收到你的跨时空回信 📨')
+                   router.push(`/notes/${memory.id}`)
                 }}
               >
                 收下这份回忆

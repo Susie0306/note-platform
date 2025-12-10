@@ -5,6 +5,7 @@ import { ClerkProvider, SignedIn, SignedOut, SignInButton, SignUpButton } from '
 import { Sparkles, Sun } from 'lucide-react'
 
 import { Sidebar } from '@/components/Sidebar'
+import { GlobalBackground } from '@/components/GlobalBackground'
 
 import './globals.css'
 
@@ -124,12 +125,13 @@ export default function RootLayout({
 
               {/* 登录后 (SignedIn) 的布局：显示侧边栏 + 主内容 */}
               <SignedIn>
+                <GlobalBackground />
                 <div className="flex min-h-screen flex-col md:flex-row">
                   {/* 移动端顶部导航 (仅在手机显示) */}
                   <MobileNavWrapper />
 
                   {/* 桌面端侧边栏 (仅在桌面显示) */}
-                  <aside className="bg-muted/40 hidden min-h-screen w-64 border-r md:block">
+                  <aside className="bg-background/40 hidden min-h-screen w-64 border-r backdrop-blur-sm md:block">
                     <Sidebar />
                   </aside>
 

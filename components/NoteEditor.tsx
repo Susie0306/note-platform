@@ -1,6 +1,8 @@
 'use client'
 
-import React, { useEffect, useRef, useState, useTransition } from 'react'
+import React, { useEffect, useMemo, useRef, useState, useTransition } from 'react'
+import { useUser } from '@clerk/nextjs'
+import { ClientSideSuspense } from '@liveblocks/react/suspense'
 import { Cloud, CloudOff, HardDrive, Save } from 'lucide-react'
 import { toast } from 'sonner'
 import { useDebouncedCallback } from 'use-debounce'
@@ -16,6 +18,7 @@ import { PlateEditor } from '@/components/editor/plate-editor'
 import { TagInput } from '@/components/TagInput'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { RoomProvider, useMyPresence, useOthers } from '@/lib/liveblocks.config'
 import { updateNote } from '@/app/actions/notes'
 
 interface NoteEditorProps {
@@ -26,13 +29,74 @@ interface NoteEditorProps {
   initialCreatedAt: Date
 }
 
-export function NoteEditor({
+interface CollaborativeNoteEditorProps extends NoteEditorProps {
+  roomId: string
+  userName: string
+  userColor: string
+}
+
+const collaboratorColors = [
+  '#f97316',
+  '#22c55e',
+  '#3b82f6',
+  '#a855f7',
+  '#ef4444',
+  '#0ea5e9',
+  '#10b981',
+]
+
+const pickColor = (seed: string) => {
+  if (!seed) return collaboratorColors[0]
+  let hash = 0
+  for (let i = 0; i < seed.length; i++) {
+    hash = (hash << 5) - hash + seed.charCodeAt(i)
+    hash |= 0
+  }
+  const index = Math.abs(hash) % collaboratorColors.length
+  return collaboratorColors[index]
+}
+
+export function NoteEditor(props: NoteEditorProps) {
+  const { user, isLoaded } = useUser()
+  const roomId = `note-${props.noteId}`
+  const displayName = isLoaded ? user?.fullName ?? user?.username ?? '我' : '我'
+  const userColor = useMemo(() => pickColor(user?.id ?? roomId), [roomId, user?.id])
+
+  return (
+    <RoomProvider
+      id={roomId}
+      initialPresence={{ cursor: null, name: displayName, color: userColor }}
+    >
+      <ClientSideSuspense
+        fallback={
+          <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+            正在连接协同编辑...
+          </div>
+        }
+      >
+        {() => (
+          <NoteEditorContent
+            {...props}
+            roomId={roomId}
+            userName={displayName}
+            userColor={userColor}
+          />
+        )}
+      </ClientSideSuspense>
+    </RoomProvider>
+  )
+}
+
+function NoteEditorContent({
   noteId,
   initialTitle,
   initialContent,
   initialTags,
   initialCreatedAt,
-}: NoteEditorProps) {
+  roomId,
+  userName,
+  userColor,
+}: CollaborativeNoteEditorProps) {
   // 状态管理
   const [title, setTitle] = useState(initialTitle || '')
   const [content, setContent] = useState(initialContent || '')
@@ -44,6 +108,29 @@ export function NoteEditor({
   const [saveLocation, setSaveLocation] = useState<'cloud' | 'local' | null>(null)
 
   const isMounted = useRef(false)
+  const [, setMyPresence] = useMyPresence<{ name: string; color: string }>()
+  const others = useOthers()
+  const collaboratorAvatars = useMemo(
+    () => [
+      { id: 'me', name: userName, color: userColor },
+      ...others.map((other) => ({
+        id: `conn-${other.connectionId}`,
+        name:
+          (other.presence as any)?.name ??
+          (other.info as any)?.name ??
+          '协作者',
+        color:
+          (other.presence as any)?.color ??
+          (other.info as any)?.color ??
+          collaboratorColors[0],
+      })),
+    ],
+    [others, userColor, userName]
+  )
+
+  useEffect(() => {
+    setMyPresence({ name: userName, color: userColor })
+  }, [setMyPresence, userColor, userName])
 
   // --- 保存逻辑 (保持不变，省略部分注释以精简) ---
   const performSave = async (title: string, content: string, tags: string[]) => {
@@ -124,7 +211,21 @@ export function NoteEditor({
             placeholder="无标题笔记"
             className="placeholder:text-muted-foreground/50 h-auto w-full min-w-0 border-none px-0 text-4xl sm:text-5xl md:text-5xl font-extrabold tracking-tight shadow-none focus-visible:ring-0"
           />
-          <div className="flex items-center gap-2 text-sm text-gray-400">
+          <div className="flex items-center gap-3 text-sm text-gray-400">
+            <div className="flex items-center gap-2">
+              <div className="flex -space-x-2">
+                {collaboratorAvatars.slice(0, 4).map((member) => (
+                  <span
+                    key={member.id}
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white text-[10px] font-medium text-white shadow-sm"
+                    style={{ backgroundColor: member.color }}
+                  >
+                    {member.name?.[0] ?? '友'}
+                  </span>
+                ))}
+              </div>
+              <span>{others.length + 1} 人在线</span>
+            </div>
             {isSaving ? (
               <span className="flex items-center gap-1 text-blue-500">
                 <Cloud className="h-4 w-4 animate-pulse" /> 保存中...
@@ -161,7 +262,13 @@ export function NoteEditor({
       <div className="flex flex-1 overflow-hidden rounded-lg border bg-white shadow-sm dark:bg-zinc-950">
         <div className="h-full w-full overflow-y-auto">
           {/* ✅ 核心集成点：数据双向绑定 */}
-          <PlateEditor initialMarkdown={content} onChange={(md) => setContent(md)} />
+          <PlateEditor
+            roomId={roomId}
+            userName={userName}
+            userColor={userColor}
+            initialMarkdown={content}
+            onChange={(md) => setContent(md)}
+          />
         </div>
       </div>
     </div>

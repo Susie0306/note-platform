@@ -1,6 +1,6 @@
 'use client'
 
-import { useTransition } from 'react'
+import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { formatDistanceToNow } from 'date-fns'
@@ -10,6 +10,7 @@ import { Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { deleteNote } from '@/app/actions/notes'
 
 // 定义 Props 类型，这里直接对应 Prisma 返回的数据结构
@@ -26,15 +27,21 @@ interface NoteCardProps {
 export function NoteCard({ note }: NoteCardProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
-  const handleDelete = (e: React.MouseEvent) => {
+  const handleDeleteClick = (e: React.MouseEvent) => {
     e.preventDefault() // 防止触发 Link 跳转
-    if (!confirm('确定要删除这条笔记吗？')) return
+    e.stopPropagation()
+    setShowDeleteDialog(true)
+  }
 
+  const handleConfirmDelete = () => {
     startTransition(async () => {
       await deleteNote(note.id)
+      setShowDeleteDialog(false)
     })
   }
+
   // 标签点击处理函数
   const handleTagClick = (e: React.MouseEvent, tagName: string) => {
     e.preventDefault() // 阻止 Link 跳转详情页
@@ -80,11 +87,21 @@ export function NoteCard({ note }: NoteCardProps) {
             variant="ghost"
             size="icon"
             className="h-8 w-8 text-red-500 opacity-0 transition-opacity group-hover:opacity-100"
-            onClick={handleDelete}
+            onClick={handleDeleteClick}
             disabled={isPending}
           >
             <Trash2 className="h-4 w-4" />
           </Button>
+
+          <ConfirmDialog
+            open={showDeleteDialog}
+            onOpenChange={setShowDeleteDialog}
+            title="删除笔记"
+            description="确定要将这条笔记移至回收站吗？可以在回收站中恢复。"
+            onConfirm={handleConfirmDelete}
+            variant="destructive"
+            loading={isPending}
+          />
         </CardFooter>
       </Card>
     </Link>
