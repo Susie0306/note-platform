@@ -1,10 +1,13 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect, useMemo } from 'react'
 import { AutoformatPlugin } from '@platejs/autoformat'
+import { BaseYjsPlugin, type UnifiedProvider } from '@platejs/yjs'
 import { toggleList } from '@platejs/list'
-import { MarkdownPlugin, serializeMd } from '@platejs/markdown'
+import { MarkdownPlugin } from '@platejs/markdown'
+import { LiveblocksYjsProvider } from '@liveblocks/yjs'
 import remarkGfm from 'remark-gfm'
+import type { Awareness } from 'y-protocols/awareness'
 import {
   Bold,
   Code as CodeIcon,
@@ -19,6 +22,7 @@ import {
 } from 'lucide-react'
 import { KEYS } from 'platejs'
 import { Plate, useEditorRef, usePlateEditor } from 'platejs/react'
+import * as Y from 'yjs'
 
 import { AIAssistant } from '@/components/AIAssistant' // 引入 AI 助手
 import { BasicNodesKit } from '@/components/basic-nodes-kit'
@@ -27,6 +31,46 @@ import { Editor, EditorContainer } from '@/components/ui/editor'
 import { FixedToolbar } from '@/components/ui/fixed-toolbar'
 import { MarkToolbarButton } from '@/components/ui/mark-toolbar-button'
 import { ToolbarButton, ToolbarGroup } from '@/components/ui/toolbar' // 引入分组组件
+import { useRoom } from '@/lib/liveblocks.config'
+
+class LiveblocksProviderAdapter implements UnifiedProvider {
+  type = 'liveblocks'
+  awareness: Awareness
+  document: Y.Doc
+  private provider: LiveblocksYjsProvider
+  private connected = false
+
+  constructor(room: any, doc: Y.Doc) {
+    this.provider = new LiveblocksYjsProvider(room, doc, {
+      offlineSupport_experimental: true,
+    })
+    this.awareness = this.provider.awareness as unknown as Awareness
+    this.document = doc
+  }
+
+  connect() {
+    this.provider.connect()
+    this.connected = true
+  }
+
+  disconnect() {
+    this.provider.disconnect()
+    this.connected = false
+  }
+
+  destroy() {
+    this.provider.destroy()
+    this.connected = false
+  }
+
+  get isConnected() {
+    return this.connected
+  }
+
+  get isSynced() {
+    return this.provider.synced ?? this.provider.getStatus() === 'synchronized'
+  }
+}
 
 // --- 1. 配置分离 ---
 const autoformatRules = [
@@ -63,11 +107,12 @@ function EditorToolbar() {
 
   // AI 助手所需的辅助函数
   const getContent = () => {
-    return editor.api.markdown.serialize()
-  }
+  const api = editor.api as any;
+  return api.markdown?.serialize() || '';
+}
 
   const handleInsert = (text: string) => {
-    editor.insertText(text)
+    (editor as any).insertText(text)
   }
 
   return (
@@ -138,16 +183,38 @@ function EditorToolbar() {
 interface PlateEditorProps {
   initialMarkdown?: string
   onChange?: (markdown: string) => void
+  roomId?: string
+  userName?: string
+  userColor?: string
 }
 
-export function PlateEditor({ initialMarkdown, onChange }: PlateEditorProps) {
-  const editor = usePlateEditor({
-    plugins: [
+export function PlateEditor({
+  initialMarkdown,
+  onChange,
+  roomId,
+  userName,
+  userColor,
+}: PlateEditorProps) {
+  const room = useRoom()
+  const yDoc = useMemo(() => new Y.Doc(), [])
+  const provider = useMemo(() => {
+    if (!roomId) return null
+    return new LiveblocksProviderAdapter(room, yDoc)
+  }, [room, roomId, yDoc])
+
+  useEffect(() => {
+    if (!provider) return
+    provider.awareness.setLocalStateField('user', {
+      name: userName ?? '我',
+      color: userColor ?? '#f59e0b',
+    })
+  }, [provider, userColor, userName])
+
+  const plugins = useMemo(() => {
+    const basePlugins = [
       ...BasicNodesKit,
       MarkdownPlugin.configure({
         options: { remarkPlugins: [remarkGfm] },
-        serialize: { children: true },
-        deserialize: { children: true },
       }),
       AutoformatPlugin.configure({
         options: {
@@ -155,9 +222,51 @@ export function PlateEditor({ initialMarkdown, onChange }: PlateEditorProps) {
           rules: autoformatRules,
         },
       }),
-    ],
-    value: (e) => e.api.markdown.deserialize(initialMarkdown || ''),
+    ]
+
+    if (!provider) return basePlugins
+
+    return [
+      BaseYjsPlugin.configure({
+        options: {
+          awareness: provider.awareness,
+          providers: [provider],
+          ydoc: yDoc,
+          cursors: {},
+        },
+      }),
+      ...basePlugins,
+    ]
+  }, [provider, yDoc])
+
+  const editor = usePlateEditor({
+    plugins,
+    value: (e: any) => e.api.markdown.deserialize(initialMarkdown || ''),
   })
+
+  useEffect(() => {
+    if (!provider) return
+
+    const initCollaboration = async () => {
+      try {
+        await editor.api.yjs.init({
+          id: roomId ?? editor.id,
+          autoConnect: true,
+          value: () => editor.api.markdown.deserialize(initialMarkdown || ''),
+        })
+      } catch (error) {
+        console.error('Failed to init Liveblocks Yjs provider', error)
+      }
+    }
+
+    void initCollaboration()
+
+    return () => {
+      editor.api.yjs.destroy?.()
+      provider.destroy()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editor, initialMarkdown, provider, roomId])
 
   return (
     <Plate
