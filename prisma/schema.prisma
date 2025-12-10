@@ -73,6 +73,9 @@ model Wish {
   
   imageUrl    String?   // 愿景图 URL
   
+  // 软删除标记
+  deletedAt   DateTime?
+
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   

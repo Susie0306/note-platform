@@ -1,8 +1,11 @@
+'use client'
+
 import React from 'react'
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import { Calendar, MoreHorizontal, Target } from 'lucide-react'
+import { WishActions } from '@/components/wishes/WishActions'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -43,9 +46,9 @@ export function WishCard({ wish }: WishCardProps) {
           <Badge variant="outline" className="mb-2 w-fit font-normal text-muted-foreground">
             {wish.status === 'COMPLETED' ? '已达成' : '进行中'}
           </Badge>
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground opacity-0 group-hover:opacity-100">
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
+          <div className="opacity-0 transition-opacity group-hover:opacity-100" onClick={(e) => e.preventDefault()}>
+             <WishActions wishId={wish.id} align="end" />
+          </div>
         </div>
         <CardTitle className="line-clamp-2 text-lg leading-snug">{wish.title}</CardTitle>
       </CardHeader>

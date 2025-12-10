@@ -4,6 +4,7 @@ import { getWish } from '@/app/actions/wishes'
 import { LogCreator } from '@/components/wishes/LogCreator'
 import { ProgressUpdater } from '@/components/wishes/ProgressUpdater'
 import { WishMessage } from '@/components/wishes/WishMessage'
+import { WishActions } from '@/components/wishes/WishActions'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import { Calendar, CheckCircle2, ChevronLeft, Clock, Flag, MapPin, Sparkles } from 'lucide-react'
@@ -44,11 +45,14 @@ export default async function WishDetailPage({ params }: PageProps) {
           <div className="space-y-4">
             <div className="flex items-start justify-between gap-4">
               <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">{wish.title}</h1>
-              {wish.status === 'COMPLETED' && (
-                <Badge className="bg-green-500 text-white hover:bg-green-600">
-                  <CheckCircle2 className="mr-1 h-3 w-3" /> 已达成
-                </Badge>
-              )}
+              <div className="flex items-center gap-2">
+                {wish.status === 'COMPLETED' && (
+                  <Badge className="bg-green-500 text-white hover:bg-green-600">
+                    <CheckCircle2 className="mr-1 h-3 w-3" /> 已达成
+                  </Badge>
+                )}
+                <WishActions wishId={wish.id} />
+              </div>
             </div>
             
             <div className="flex flex-wrap gap-4 text-sm text-gray-500">
