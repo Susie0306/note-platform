@@ -30,8 +30,8 @@ export default async function TrashPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">回收站</h1>
-        <span className="text-sm text-gray-500">共 {deletedNotes.length} 条 (最近删除)</span>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">回收站</h1>
+        <span className="text-sm text-gray-500 dark:text-gray-400">共 {deletedNotes.length} 条 (最近删除)</span>
       </div>
 
       {deletedNotes.length > 0 ? (

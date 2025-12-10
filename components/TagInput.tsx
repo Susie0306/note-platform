@@ -39,8 +39,8 @@ export function TagInput({ tags, setTags, placeholder }: TagInputProps) {
   }
 
   return (
-    <div className="space-y-2">
-      <div className="focus-within:ring-ring ring-offset-background flex flex-wrap gap-2 rounded-md border bg-white p-2 shadow-sm focus-within:ring-2 focus-within:ring-offset-2">
+    <div className="space-y-1">
+      <div className="focus-within:ring-ring ring-offset-background flex flex-wrap gap-2 rounded-md bg-transparent py-1 focus-within:ring-2 focus-within:ring-offset-2">
         {tags.map((tag, index) => (
           <Badge
             key={index}
@@ -68,7 +68,7 @@ export function TagInput({ tags, setTags, placeholder }: TagInputProps) {
           className="h-7 min-w-[120px] flex-1 border-none px-1 shadow-none focus-visible:ring-0"
         />
       </div>
-      <div className="flex items-center gap-2 text-xs text-gray-500">
+      <div className="flex items-center gap-2 text-xs text-gray-500 flex-wrap">
         <span>快速添加:</span>
         {SUGGESTED_TAGS.map((tag) => (
           <button
@@ -77,7 +77,7 @@ export function TagInput({ tags, setTags, placeholder }: TagInputProps) {
             onClick={() => {
               if (!tags.includes(tag)) setTags([...tags, tag])
             }}
-            className="cursor-pointer hover:text-blue-500 hover:underline"
+            className="cursor-pointer rounded-full bg-secondary/10 px-3 py-1 text-xs text-secondary-foreground hover:bg-secondary/20 transition-colors"
           >
             {tag}
           </button>

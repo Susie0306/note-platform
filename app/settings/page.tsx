@@ -8,12 +8,48 @@ import { cn } from '@/lib/utils'
 import { ThemeColor, useThemeColor } from '@/components/theme-color-provider'
 
 // 主题色配置
-const themeColors: { name: string; value: ThemeColor; color: string }[] = [
-  { name: '柔暖日光黄', value: 'yellow', color: '#FFD166' },
-  { name: '柔粉紫', value: 'purple', color: '#E8C8F7' },
-  { name: '暖橙红', value: 'orange', color: '#FF7F50' },
-  { name: '浅青蓝', value: 'blue', color: '#87CEEB' },
-  { name: '暖棕黄', value: 'brown', color: '#D2B48C' },
+const themeColors: { 
+  name: string
+  value: ThemeColor
+  color: string
+  description: string
+  palette: string[]
+}[] = [
+  { 
+    name: '柔暖日光黄', 
+    value: 'yellow', 
+    color: '#FFD166',
+    description: '温暖治愈，如冬日暖阳',
+    palette: ['#FFD166', '#FFF8E1', '#8B6B3D']
+  },
+  { 
+    name: '治愈柔粉紫', 
+    value: 'purple', 
+    color: '#E8C8F7',
+    description: '梦幻浪漫，温柔的遐想',
+    palette: ['#E8C8F7', '#FAF3FD', '#7A5C85']
+  },
+  { 
+    name: '活力暖橙红', 
+    value: 'orange', 
+    color: '#FF7F50',
+    description: '热情洋溢，充满生命力',
+    palette: ['#FF7F50', '#FFF2EC', '#9C3F1E']
+  },
+  { 
+    name: '宁静浅青蓝', 
+    value: 'blue', 
+    color: '#87CEEB',
+    description: '清新自然，像雨后的天',
+    palette: ['#87CEEB', '#F0F9FF', '#2C5D75']
+  },
+  { 
+    name: '复古暖棕黄', 
+    value: 'brown', 
+    color: '#D2B48C',
+    description: '沉稳怀旧，岁月的痕迹',
+    palette: ['#D2B48C', '#FDF8F3', '#6B563F']
+  },
 ]
 
 export default function SettingsPage() {
@@ -88,34 +124,46 @@ export default function SettingsPage() {
           <p className="text-muted-foreground text-sm">沉浸式的色彩体验 (自动切换为浅色模式)</p>
         </div>
 
-        <div className="flex flex-wrap gap-6 pt-2">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 pt-2">
           {themeColors.map((item) => (
             <button
               key={item.value}
               onClick={() => handleThemeColor(item.value)}
-              className="group relative flex flex-col items-center gap-2"
+              className={cn(
+                'group relative flex flex-col items-start gap-3 rounded-xl border-2 p-4 transition-all hover:bg-accent/50',
+                themeColor === item.value
+                  ? 'border-primary bg-accent ring-1 ring-primary'
+                  : 'border-transparent bg-card hover:border-border'
+              )}
             >
-              <div
-                className={cn(
-                  'flex h-14 w-14 items-center justify-center rounded-full border-2 shadow-sm transition-all group-hover:scale-110',
-                  themeColor === item.value
-                    ? 'scale-110 border-black/50 ring-2 ring-black/20'
-                    : 'border-transparent'
+              <div className="flex w-full items-center justify-between">
+                <span className={cn(
+                  "text-base font-semibold",
+                  themeColor === item.value ? "text-primary" : "text-foreground"
+                )}>
+                  {item.name}
+                </span>
+                {themeColor === item.value && (
+                  <div className="rounded-full bg-primary p-1 text-primary-foreground">
+                    <Check className="h-4 w-4" />
+                  </div>
                 )}
-                style={{ backgroundColor: item.color }}
-              >
-                {themeColor === item.value && <Check className="h-6 w-6 text-black/60" />}
               </div>
-              <span
-                className={cn(
-                  'text-xs font-medium transition-colors',
-                  themeColor === item.value
-                    ? 'text-foreground'
-                    : 'text-muted-foreground group-hover:text-foreground'
-                )}
-              >
-                {item.name}
-              </span>
+              
+              <p className="text-left text-xs text-muted-foreground">
+                {item.description}
+              </p>
+
+              {/* 色卡展示 */}
+              <div className="mt-2 flex gap-2">
+                {item.palette.map((color, index) => (
+                  <div
+                    key={index}
+                    className="h-6 w-6 rounded-full border shadow-sm"
+                    style={{ backgroundColor: color }}
+                  />
+                ))}
+              </div>
             </button>
           ))}
         </div>

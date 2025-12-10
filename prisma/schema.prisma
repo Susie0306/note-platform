@@ -18,6 +18,7 @@ model User {
 
   notes     Note[]   // 一个人可以有很多笔记
   tags      Tag[]    // 一个人可以有很多标签
+  wishes    Wish[]   // 一个人可以有很多心愿
 }
 
 // 2. 笔记模型
@@ -59,6 +60,40 @@ model Tag {
 
   @@unique([name, userId]) // 防止同一个用户创建重名标签
   @@index([userId])
+}
+
+// 4. 心愿模型
+model Wish {
+  id          String    @id @default(uuid())
+  title       String
+  description String?   @db.Text
+  targetDate  DateTime? // 目标日期
+  progress    Int       @default(0) // 进度 0-100
+  status      String    @default("IN_PROGRESS") // IN_PROGRESS, COMPLETED, ARCHIVED
+  
+  imageUrl    String?   // 愿景图 URL
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  logs        WishLog[] // 心愿的节点记录
+
+  @@index([userId])
+}
+
+// 5. 心愿节点记录模型
+model WishLog {
+  id        String   @id @default(uuid())
+  content   String   @db.Text
+  imageUrl  String?
+  
+  createdAt DateTime @default(now())
+  
+  wishId    String
+  wish      Wish     @relation(fields: [wishId], references: [id], onDelete: Cascade)
 }
 
 

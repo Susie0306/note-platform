@@ -37,18 +37,18 @@ export function TrashNoteCard({ note }: TrashNoteCardProps) {
   }
 
   return (
-    <Card className="flex h-full flex-col border-dashed bg-gray-50/50">
+    <Card className="flex h-full flex-col border-dashed bg-gray-50/50 dark:bg-zinc-900/50 dark:border-zinc-700">
       <CardHeader>
-        <CardTitle className="line-clamp-1 text-lg text-gray-600">
+        <CardTitle className="line-clamp-1 text-lg text-gray-600 dark:text-gray-300">
           {note.title || '无标题笔记'}
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1">
-        <p className="line-clamp-3 h-[4.5em] text-sm text-gray-400">
+        <p className="line-clamp-3 h-[4.5em] text-sm text-gray-400 dark:text-gray-500">
           {note.content || '暂无内容...'}
         </p>
       </CardContent>
-      <CardFooter className="flex items-center justify-between text-xs text-gray-400">
+      <CardFooter className="flex items-center justify-between text-xs text-gray-400 dark:text-gray-500">
         <span>
           删除于:{' '}
           {note.deletedAt &&

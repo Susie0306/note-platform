@@ -4,7 +4,7 @@ import React, { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { UserButton } from '@clerk/nextjs'
-import { FileText, Loader2, Menu, Plus, Search, Settings, Trash2 } from 'lucide-react'
+import { FileText, Home, Loader2, Menu, Plus, Search, Settings, Sparkles, Trash2 } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -14,9 +14,19 @@ import { createNote } from '@/app/actions/notes'
 // 侧边栏菜单配置
 const sidebarNavItems = [
   {
+    title: '首页',
+    href: '/',
+    icon: Home,
+  },
+  {
     title: '全部笔记',
     href: '/notes',
     icon: FileText,
+  },
+  {
+    title: '小希冀',
+    href: '/wishes',
+    icon: Sparkles,
   },
   {
     title: '搜索',

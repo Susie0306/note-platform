@@ -4,6 +4,7 @@ import React from 'react'
 import { AutoformatPlugin } from '@platejs/autoformat'
 import { toggleList } from '@platejs/list'
 import { MarkdownPlugin, serializeMd } from '@platejs/markdown'
+import remarkGfm from 'remark-gfm'
 import {
   Bold,
   Code as CodeIcon,
@@ -24,8 +25,8 @@ import { BasicNodesKit } from '@/components/basic-nodes-kit'
 import { BlockToolbarButton } from '@/components/ui/block-toolbar-button'
 import { Editor, EditorContainer } from '@/components/ui/editor'
 import { FixedToolbar } from '@/components/ui/fixed-toolbar'
-import { ToolbarGroup } from '@/components/ui/toolbar' // 引入分组组件
-import { ToolbarButton } from '@/components/ui/toolbar-button'
+import { MarkToolbarButton } from '@/components/ui/mark-toolbar-button'
+import { ToolbarButton, ToolbarGroup } from '@/components/ui/toolbar' // 引入分组组件
 
 // --- 1. 配置分离 ---
 const autoformatRules = [
@@ -80,18 +81,18 @@ function EditorToolbar() {
 
       {/* 第二组：文本样式 */}
       <ToolbarGroup>
-        <ToolbarButton onClick={() => editor.api.mark.toggle(KEYS.bold)} tooltip="加粗 (Mod+B)">
+        <MarkToolbarButton nodeType={KEYS.bold} tooltip="加粗 (Mod+B)">
           <Bold className="h-4 w-4" />
-        </ToolbarButton>
-        <ToolbarButton onClick={() => editor.api.mark.toggle(KEYS.italic)} tooltip="斜体 (Mod+I)">
+        </MarkToolbarButton>
+        <MarkToolbarButton nodeType={KEYS.italic} tooltip="斜体 (Mod+I)">
           <Italic className="h-4 w-4" />
-        </ToolbarButton>
-        <ToolbarButton onClick={() => editor.api.mark.toggle(KEYS.strikethrough)} tooltip="删除线">
+        </MarkToolbarButton>
+        <MarkToolbarButton nodeType={KEYS.strikethrough} tooltip="删除线">
           <Strikethrough className="h-4 w-4" />
-        </ToolbarButton>
-        <ToolbarButton onClick={() => editor.api.mark.toggle(KEYS.code)} tooltip="代码">
+        </MarkToolbarButton>
+        <MarkToolbarButton nodeType={KEYS.code} tooltip="代码">
           <CodeIcon className="h-4 w-4" />
-        </ToolbarButton>
+        </MarkToolbarButton>
       </ToolbarGroup>
 
       <div className="bg-border/50 mx-1.5 h-4 w-[1px]" />
@@ -144,6 +145,7 @@ export function PlateEditor({ initialMarkdown, onChange }: PlateEditorProps) {
     plugins: [
       ...BasicNodesKit,
       MarkdownPlugin.configure({
+        options: { remarkPlugins: [remarkGfm] },
         serialize: { children: true },
         deserialize: { children: true },
       }),

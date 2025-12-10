@@ -1,0 +1,122 @@
+'use client'
+
+import React, { useState, useTransition } from 'react'
+import { createWish } from '@/app/actions/wishes'
+import { Loader2, Plus, Sparkles } from 'lucide-react'
+import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
+
+import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+
+const WISH_TEMPLATES = [
+  { title: '去一次说走就走的旅行 ✈️', desc: '探索未知的世界' },
+  { title: '读完 10 本好书 📚', desc: '充实精神世界' },
+  { title: '学会一项新技能 🎸', desc: '吉他/编程/画画' },
+  { title: '坚持运动 50 天 🏃', desc: '强健体魄' },
+]
+
+export function CreateWishDialog() {
+  const [open, setOpen] = useState(false)
+  const [title, setTitle] = useState('')
+  const [isPending, startTransition] = useTransition()
+
+  async function onSubmit(formData: FormData) {
+    startTransition(async () => {
+      try {
+        await createWish(formData)
+        setOpen(false)
+        setTitle('')
+        toast.success('许愿成功！愿望一定会实现✨')
+      } catch (error) {
+        toast.error('许愿失败，请稍后重试')
+      }
+    })
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+          <Plus className="mr-2 h-4 w-4" />
+          许个愿望
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/20">
+            <Sparkles className="h-6 w-6 text-primary" />
+          </div>
+          <DialogTitle className="text-center">许下一个小希冀</DialogTitle>
+          <DialogDescription className="text-center">
+            写下你的心愿，设定一个目标日期，我们一起见证它的实现。
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid grid-cols-2 gap-2 mb-2">
+          {WISH_TEMPLATES.map((template) => (
+            <button
+              key={template.title}
+              type="button"
+              onClick={() => setTitle(template.title)}
+              className={cn(
+                "flex flex-col items-start p-3 rounded-lg border text-left transition-colors hover:bg-primary/5",
+                title === template.title ? "border-primary bg-primary/10 ring-1 ring-primary" : "border-gray-200"
+              )}
+            >
+              <span className="text-sm font-medium text-gray-900">{template.title}</span>
+              <span className="text-xs text-gray-500 mt-1">{template.desc}</span>
+            </button>
+          ))}
+        </div>
+
+        <form action={onSubmit} className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <Label htmlFor="title">心愿内容</Label>
+            <Input
+              id="title"
+              name="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="例如：今年学会弹吉他..."
+              required
+              className="col-span-3"
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="targetDate">目标日期 (可选)</Label>
+            <Input
+              id="targetDate"
+              name="targetDate"
+              type="date"
+              className="col-span-3"
+            />
+          </div>
+          <DialogFooter>
+            <Button type="submit" disabled={isPending} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
+              {isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  许愿中...
+                </>
+              ) : (
+                '确认许愿'
+              )}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}
+

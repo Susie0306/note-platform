@@ -3,7 +3,7 @@
 import React from 'react'
 import { useEditorRef } from 'platejs/react'
 import { Editor, Transforms } from 'slate'
-import { ToolbarButton } from '@/components/ui/toolbar-button'
+import { ToolbarButton } from '@/components/ui/toolbar'
 
 interface BlockToolbarButtonProps {
   type: string

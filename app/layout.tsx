@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { zhCN } from '@clerk/localizations'
 import { ClerkProvider, SignedIn, SignedOut, SignInButton, SignUpButton } from '@clerk/nextjs'
+import { Sparkles, Sun } from 'lucide-react'
 
 import { Sidebar } from '@/components/Sidebar'
 
@@ -68,23 +69,55 @@ export default function RootLayout({
           >
             {/* 再包裹 ThemeColorProvider (负责彩色主题) */}
             <ThemeColorProvider>
-              {/* 登录前 (SignedOut) 的布局：简单显示一个居中的登录框 */}
+              {/* 登录前 (SignedOut) 的布局：优化后的暖色主题落地页 */}
               <SignedOut>
-                <div className="flex h-screen w-full items-center justify-center bg-gray-50">
-                  <div className="text-center">
-                    <h1 className="mb-4 text-2xl font-bold">欢迎来到熙记</h1>
-                    <div className="flex justify-center gap-4">
+                <div className="relative flex h-screen w-full items-center justify-center overflow-hidden bg-gradient-to-br from-[#FFFDE7] to-[#FFF59D] p-4 text-gray-800">
+                  {/* 背景装饰：柔光光斑 */}
+                  <div className="absolute left-[-10%] top-[-10%] h-[500px] w-[500px] animate-pulse rounded-full bg-yellow-300/30 blur-[100px]" />
+                  <div className="absolute bottom-[-10%] right-[-10%] h-[600px] w-[600px] rounded-full bg-orange-200/20 blur-[120px]" />
+                  
+                  {/* 小装饰元素 */}
+                  <div className="absolute left-[15%] top-[20%] text-yellow-500/40">
+                    <Sun size={48} />
+                  </div>
+                  <div className="absolute bottom-[20%] right-[15%] text-orange-400/30">
+                    <Sparkles size={32} />
+                  </div>
+
+                  {/* 主卡片 */}
+                  <div className="relative z-10 w-full max-w-md rounded-2xl border border-white/50 bg-white/60 p-8 text-center shadow-xl backdrop-blur-md transition-all hover:bg-white/70">
+                    <div className="mb-6 flex justify-center">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-yellow-400/90 text-white shadow-lg shadow-yellow-200">
+                        <Sparkles size={32} />
+                      </div>
+                    </div>
+                    
+                    <h1 className="mb-2 text-3xl font-bold text-gray-800">熙记</h1>
+                    <p className="mb-6 text-lg font-medium text-gray-600">以笔记为载体，守护每一份小希冀</p>
+                    
+                    <p className="mb-8 text-sm leading-relaxed text-gray-500">
+                      在这里，每一次记录都是奔赴美好的见证。<br />
+                      无论灵感闪现、生活点滴，还是未来的心愿清单，<br />
+                      熙记与你一同珍藏时光里的温暖。
+                    </p>
+                    
+                    <div className="flex flex-col gap-3">
                       <SignInButton mode="modal">
-                        <button className="rounded bg-black px-4 py-2 text-white transition hover:bg-gray-800">
-                          登录
+                        <button className="w-full rounded-xl bg-yellow-500 py-3 font-medium text-white shadow-md transition-all hover:bg-yellow-600 hover:shadow-lg hover:shadow-yellow-200 active:scale-[0.98]">
+                          登录我的空间
                         </button>
                       </SignInButton>
                       <SignUpButton mode="modal">
-                        <button className="rounded bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700">
-                          注册
+                        <button className="w-full rounded-xl border border-gray-200 bg-white py-3 font-medium text-gray-700 transition-all hover:bg-gray-50 hover:border-gray-300 active:scale-[0.98]">
+                          注册新账号
                         </button>
                       </SignUpButton>
                     </div>
+                  </div>
+                  
+                  {/* 底部版权/标语 */}
+                  <div className="absolute bottom-6 text-xs text-gray-400/80">
+                    记录生活 · 珍藏希冀 · 温暖随行
                   </div>
                 </div>
               </SignedOut>

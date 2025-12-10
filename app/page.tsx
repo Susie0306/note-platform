@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth, currentUser } from '@clerk/nextjs/server'
+import { getDailyMemory } from '@/app/actions/memories'
+import { MemoryCapsule } from '@/components/memories/MemoryCapsule'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import { ArrowRight, FileText, PenLine, Sparkles } from 'lucide-react'
@@ -23,8 +25,16 @@ export default async function Home() {
     where: { clerkId: userId },
     include: {
       _count: {
-        select: { notes: true },
+        select: { 
+          notes: true,
+          wishes: true // 获取心愿数量
+        },
       },
+      wishes: { // 获取进行中的心愿
+        where: { status: 'IN_PROGRESS' },
+        take: 3,
+        orderBy: { updatedAt: 'desc' }
+      }
     },
   })
 
@@ -47,6 +57,10 @@ export default async function Home() {
     orderBy: { updatedAt: 'desc' },
     take: 3,
   })
+
+  // 获取今日回忆
+  const memory = await getDailyMemory()
+
   const fullName =
     [user.firstName, user.lastName].filter(Boolean).join('') || user.username || '朋友'
   // 获取当前时间段的问候语
@@ -58,6 +72,9 @@ export default async function Home() {
 
   return (
     <div className="space-y-8">
+      {/* 记忆胶囊 (浮动展示) */}
+      <MemoryCapsule memory={memory} />
+
       {/* 顶部欢迎区域 */}
       <div className="flex items-center justify-between">
         <div>
@@ -90,17 +107,19 @@ export default async function Home() {
           </CardContent>
         </Card>
 
-        {/* 这里预留给未来的“心愿”统计 */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">小希冀</CardTitle>
-            <Sparkles className="h-4 w-4 text-yellow-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">0</div>
-            <p className="text-muted-foreground text-xs">正在奔赴的美好 (开发中)</p>
-          </CardContent>
-        </Card>
+        {/* 心愿统计 */}
+        <Link href="/wishes" className="block transition-transform hover:scale-[1.02]">
+          <Card className="h-full">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">小希冀</CardTitle>
+              <Sparkles className="text-muted-foreground h-4 w-4" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{dbUser._count.wishes}</div>
+              <p className="text-muted-foreground text-xs">正在奔赴的美好</p>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       {/* 最近记录 */}

@@ -122,7 +122,7 @@ export function NoteEditor({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="无标题笔记"
-            className="placeholder:text-muted-foreground/50 h-auto border-none px-0 text-4xl font-bold shadow-none focus-visible:ring-0"
+            className="placeholder:text-muted-foreground/50 h-auto w-full min-w-0 border-none px-0 text-4xl sm:text-5xl md:text-5xl font-extrabold tracking-tight shadow-none focus-visible:ring-0"
           />
           <div className="flex items-center gap-2 text-sm text-gray-400">
             {isSaving ? (
