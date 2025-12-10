@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
 import { auth, currentUser } from '@clerk/nextjs/server'
-import { createClient } from '@liveblocks/node'
+import { Liveblocks } from '@liveblocks/node'
 
 const secret = process.env.LIVEBLOCKS_SECRET_KEY
-const liveblocksClient = secret ? createClient({ secret }) : null
+const liveblocksClient = secret ? new Liveblocks({ secret }) : null
 
 export async function POST(req: Request) {
   if (!liveblocksClient) {
