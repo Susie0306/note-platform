@@ -108,7 +108,7 @@ function NoteEditorContent({
   const [saveLocation, setSaveLocation] = useState<'cloud' | 'local' | null>(null)
 
   const isMounted = useRef(false)
-  const [, setMyPresence] = useMyPresence<{ name: string; color: string }>()
+  const [, setMyPresence] = useMyPresence()
   const others = useOthers()
   const collaboratorAvatars = useMemo(
     () => [
