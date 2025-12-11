@@ -10,7 +10,7 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
-    "@ai-sdk/openai": "^1.0.10",
+    "@ai-sdk/openai": "^2.0.80",
     "@ai-sdk/react": "^2.0.28",
     "@ariakit/react": "^0.4.20",
     "@clerk/localizations": "^3.28.1",
@@ -76,7 +76,7 @@
     "@types/canvas-confetti": "^1.9.0",
     "@udecode/cn": "^52.0.1",
     "@uploadthing/react": "^7.3.3",
-    "ai": "^5.0.28",
+    "ai": "^5.0.110",
     "canvas-confetti": "^1.9.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
