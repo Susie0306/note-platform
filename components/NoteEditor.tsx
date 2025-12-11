@@ -67,6 +67,7 @@ export function NoteEditor(props: NoteEditorProps) {
     <RoomProvider
       id={roomId}
       initialPresence={{ cursor: null, name: displayName, color: userColor }}
+      initialStorage={{ content: props.initialContent || '' }}
     >
       <ClientSideSuspense
         fallback={

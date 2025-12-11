@@ -1,10 +1,15 @@
 'use client'
 
 import React, { useState, useTransition } from 'react'
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { UserButton } from '@clerk/nextjs'
 import { FileText, Home, Loader2, Menu, Plus, Search, Settings, Sparkles, Trash2 } from 'lucide-react'
+
+// Dynamically import UserButton to avoid SSR hydration issues
+const UserButton = dynamic(() => import('@clerk/nextjs').then(mod => mod.UserButton), {
+  ssr: false,
+})
 
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'

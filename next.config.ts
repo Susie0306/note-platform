@@ -15,7 +15,8 @@ const nextConfig: NextConfig = {
   ],
   webpack: (config) => {
     // Solve Yjs dual package hazard
-    config.resolve.alias['yjs'] = path.resolve(__dirname, 'node_modules/yjs')
+    // Force all imports of 'yjs' to resolve to the ESM module
+    config.resolve.alias['yjs$'] = path.resolve(__dirname, 'node_modules/yjs/dist/yjs.mjs')
     return config
   },
   experimental: {
@@ -23,7 +24,7 @@ const nextConfig: NextConfig = {
     // Or we can try to configure Turbopack aliases if we knew how, but Webpack is safer for Yjs compat.
     turbo: {
         resolveAlias: {
-            'yjs': './node_modules/yjs/dist/yjs.mjs',
+            'yjs': 'node_modules/yjs/dist/yjs.mjs',
         }
     }
   }
