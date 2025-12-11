@@ -36,10 +36,10 @@ export function ShareButton() {
             variant="outline"
             size="sm"
             onClick={handleCopyLink}
-            className="hidden sm:flex"
+            className="hidden sm:flex border-input bg-background hover:bg-background hover:text-foreground text-foreground shadow-sm"
           >
             {copied ? (
-              <Check className="mr-2 h-4 w-4 text-green-500" />
+              <Check className="mr-2 h-4 w-4 text-green-600 dark:text-green-400" />
             ) : (
               <Share2 className="mr-2 h-4 w-4" />
             )}

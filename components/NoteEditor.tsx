@@ -213,37 +213,37 @@ function NoteEditorContent({
             placeholder="无标题笔记"
             className="placeholder:text-muted-foreground/50 h-auto w-full min-w-0 border-none px-0 text-4xl sm:text-5xl md:text-5xl font-extrabold tracking-tight shadow-none focus-visible:ring-0"
           />
-          <div className="flex items-center gap-3 text-sm text-gray-400">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3 text-sm text-muted-foreground/80">
+            <div className="flex flex-col items-center justify-center gap-0.5">
               <div className="flex -space-x-2">
                 {collaboratorAvatars.slice(0, 4).map((member) => (
                   <span
                     key={member.id}
-                    className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white text-[10px] font-medium text-white shadow-sm"
+                    className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-background text-[9px] font-medium text-white shadow-sm ring-1 ring-background"
                     style={{ backgroundColor: member.color }}
                   >
                     {member.name?.[0] ?? '友'}
                   </span>
                 ))}
               </div>
-              <span>{others.length + 1} 人在线</span>
+              <span className="text-[10px] text-muted-foreground leading-none">{others.length + 1} 人在线</span>
             </div>
             <ShareButton />
             {isSaving ? (
-              <span className="flex items-center gap-1 text-blue-500">
+              <span className="flex items-center gap-1 text-blue-600 dark:text-blue-400">
                 <Cloud className="h-4 w-4 animate-pulse" /> 保存中...
               </span>
             ) : lastSaved ? (
-              <span className="flex items-center gap-1">
+              <span className="flex items-center gap-1 text-muted-foreground">
                 {saveLocation === 'local' ? (
-                  <HardDrive className="h-4 w-4 text-orange-500" />
+                  <HardDrive className="h-4 w-4 text-orange-600 dark:text-orange-400" />
                 ) : (
-                  <Cloud className="h-4 w-4 text-green-500" />
+                  <Cloud className="h-4 w-4 text-green-600 dark:text-green-400" />
                 )}
                 {saveLocation === 'local' ? '已存本地' : '已同步'} {lastSaved.toLocaleTimeString()}
               </span>
             ) : (
-              <span className="flex items-center gap-1">
+              <span className="flex items-center gap-1 text-muted-foreground">
                 <CloudOff className="h-4 w-4" /> 未保存
               </span>
             )}
@@ -252,7 +252,7 @@ function NoteEditorContent({
               disabled={isSaving}
               variant="outline"
               size="sm"
-              className="ml-2"
+              className="ml-2 border-input bg-background hover:bg-background hover:text-foreground text-foreground shadow-sm"
             >
               <Save className="mr-2 h-4 w-4" /> 保存
             </Button>

@@ -5,7 +5,7 @@ import { LogCreator } from '@/components/wishes/LogCreator'
 import { ProgressUpdater } from '@/components/wishes/ProgressUpdater'
 import { WishMessage } from '@/components/wishes/WishMessage'
 import { WishActions } from '@/components/wishes/WishActions'
-import { formatDistanceToNow } from 'date-fns'
+import { formatDistanceToNow, format } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import { Calendar, CheckCircle2, ChevronLeft, Clock, Flag, MapPin, Sparkles } from 'lucide-react'
 import Link from 'next/link'
@@ -65,7 +65,7 @@ export default async function WishDetailPage({ params }: PageProps) {
               {wish.targetDate && (
                 <div className="flex items-center gap-1 text-primary">
                   <Clock className="h-4 w-4" />
-                  <span>目标日期：{new Date(wish.targetDate).toLocaleDateString('zh-CN')}</span>
+                  <span>目标日期：{format(new Date(wish.targetDate), 'yyyy年MM月dd日', { locale: zhCN })}</span>
                 </div>
               )}
             </div>
@@ -80,7 +80,7 @@ export default async function WishDetailPage({ params }: PageProps) {
           </div>
 
           {/* 时间轴展示 */}
-          <div className="relative space-y-8 border-l-2 border-dashed border-gray-200 pl-8 pt-2">
+          <div className="relative space-y-8 border-l-2 border-dashed border-gray-200 ml-2 pl-8 pt-2">
             {wish.logs.length === 0 ? (
               <div className="py-8 text-sm text-gray-400">
                 还没有记录，写下你的第一条进度吧...
@@ -89,7 +89,7 @@ export default async function WishDetailPage({ params }: PageProps) {
               wish.logs.map((log) => (
                 <div key={log.id} className="relative">
                   {/* 时间轴节点 */}
-                  <div className="absolute -left-[39px] flex h-5 w-5 items-center justify-center rounded-full bg-primary/20 ring-4 ring-white">
+                  <div className="absolute -left-[43px] flex h-5 w-5 items-center justify-center rounded-full bg-primary/20 ring-4 ring-white">
                     <div className="h-2 w-2 rounded-full bg-primary" />
                   </div>
                   
@@ -111,7 +111,7 @@ export default async function WishDetailPage({ params }: PageProps) {
             
             {/* 起点 */}
             <div className="relative">
-               <div className="absolute -left-[39px] flex h-5 w-5 items-center justify-center rounded-full bg-gray-100 ring-4 ring-white">
+               <div className="absolute -left-[43px] flex h-5 w-5 items-center justify-center rounded-full bg-gray-100 ring-4 ring-white">
                  <div className="h-2 w-2 rounded-full bg-gray-300" />
                </div>
                <div className="py-1 text-sm text-gray-400">

@@ -7,6 +7,7 @@ import { Trash2, Undo2 } from 'lucide-react' // Undo2 是恢复图标
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { deleteNotePermanently, restoreNote } from '@/app/actions/notes'
 
@@ -17,9 +18,17 @@ interface TrashNoteCardProps {
     content: string | null
     deletedAt: Date | null
   }
+  isSelectionMode?: boolean
+  isSelected?: boolean
+  onSelectChange?: (checked: boolean) => void
 }
 
-export function TrashNoteCard({ note }: TrashNoteCardProps) {
+export function TrashNoteCard({ 
+  note,
+  isSelectionMode = false,
+  isSelected = false,
+  onSelectChange
+}: TrashNoteCardProps) {
   const [isPending, startTransition] = useTransition()
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
@@ -42,11 +51,26 @@ export function TrashNoteCard({ note }: TrashNoteCardProps) {
     })
   }
 
+  const handleCheckboxClick = (e: React.MouseEvent) => {
+    // e.stopPropagation() // Not strictly needed here as there's no surrounding Link, but good practice
+  }
+
   return (
-    <>
-      <Card className="flex h-full flex-col border-dashed bg-gray-50/50 dark:bg-zinc-900/50 dark:border-zinc-700">
+    <div className="relative group h-full">
+      {isSelectionMode && (
+        <div className="absolute top-2 right-2 z-20">
+          <Checkbox 
+            checked={isSelected}
+            onCheckedChange={onSelectChange}
+            onClick={handleCheckboxClick}
+            className="data-[state=checked]:bg-primary data-[state=checked]:border-primary bg-background/80 backdrop-blur-sm"
+          />
+        </div>
+      )}
+      
+      <Card className={`flex h-full flex-col border-dashed bg-gray-50/50 dark:bg-zinc-900/50 dark:border-zinc-700 ${isSelected ? 'ring-2 ring-primary border-primary' : ''}`}>
         <CardHeader>
-          <CardTitle className="line-clamp-1 text-lg text-gray-600 dark:text-gray-300">
+          <CardTitle className="line-clamp-1 text-lg text-gray-600 dark:text-gray-300 pr-6">
             {note.title || '无标题笔记'}
           </CardTitle>
         </CardHeader>
@@ -65,31 +89,33 @@ export function TrashNoteCard({ note }: TrashNoteCardProps) {
               })}
           </span>
 
-          <div className="flex gap-2">
-            {/* 恢复按钮 */}
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8 text-blue-600 hover:bg-blue-50 hover:text-blue-700"
-              onClick={handleRestore}
-              disabled={isPending}
-              title="恢复笔记"
-            >
-              <Undo2 className="h-4 w-4" />
-            </Button>
+          {!isSelectionMode && (
+            <div className="flex gap-2">
+              {/* 恢复按钮 */}
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+                onClick={handleRestore}
+                disabled={isPending}
+                title="恢复笔记"
+              >
+                <Undo2 className="h-4 w-4" />
+              </Button>
 
-            {/* 彻底删除按钮 */}
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8 text-red-500 hover:bg-red-50 hover:text-red-600"
-              onClick={handleDeleteClick}
-              disabled={isPending}
-              title="彻底删除"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
+              {/* 彻底删除按钮 */}
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 text-red-500 hover:bg-red-50 hover:text-red-600"
+                onClick={handleDeleteClick}
+                disabled={isPending}
+                title="彻底删除"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
         </CardFooter>
       </Card>
 
@@ -103,6 +129,6 @@ export function TrashNoteCard({ note }: TrashNoteCardProps) {
         loading={isPending}
         confirmText="彻底删除"
       />
-    </>
+    </div>
   )
 }

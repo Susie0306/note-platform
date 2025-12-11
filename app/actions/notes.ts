@@ -136,3 +136,72 @@ export async function deleteNotePermanently(noteId: string) {
   revalidatePath('/trash')
   return { success: true }
 }
+
+export async function bulkDeleteNotes(noteIds: string[]) {
+  const { userId } = await auth()
+  if (!userId) throw new Error('Unauthorized')
+  
+  // Need to get dbUser id to ensure ownership if we want to be strict, 
+  // but updateMany with where clause on user relation is not directly supported on Note unless we query user first or join.
+  // Actually, Note has userId field which is our internal ID.
+  // We have clerkId.
+  // Let's get the internal user ID first.
+  const dbUser = await prisma.user.findUnique({
+    where: { clerkId: userId },
+  })
+  if (!dbUser) throw new Error('User not found')
+
+  await prisma.note.updateMany({
+    where: {
+      id: { in: noteIds },
+      userId: dbUser.id
+    },
+    data: { deletedAt: new Date() },
+  })
+
+  revalidatePath('/notes')
+  revalidatePath('/trash')
+  return { success: true }
+}
+
+export async function bulkRestoreNotes(noteIds: string[]) {
+  const { userId } = await auth()
+  if (!userId) throw new Error('Unauthorized')
+
+  const dbUser = await prisma.user.findUnique({
+    where: { clerkId: userId },
+  })
+  if (!dbUser) throw new Error('User not found')
+
+  await prisma.note.updateMany({
+    where: {
+      id: { in: noteIds },
+      userId: dbUser.id
+    },
+    data: { deletedAt: null },
+  })
+
+  revalidatePath('/notes')
+  revalidatePath('/trash')
+  return { success: true }
+}
+
+export async function bulkDeleteNotesPermanently(noteIds: string[]) {
+  const { userId } = await auth()
+  if (!userId) throw new Error('Unauthorized')
+
+  const dbUser = await prisma.user.findUnique({
+    where: { clerkId: userId },
+  })
+  if (!dbUser) throw new Error('User not found')
+
+  await prisma.note.deleteMany({
+    where: {
+      id: { in: noteIds },
+      userId: dbUser.id
+    },
+  })
+
+  revalidatePath('/trash')
+  return { success: true }
+}

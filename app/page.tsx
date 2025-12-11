@@ -13,10 +13,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 export default async function Home() {
   const { userId } = await auth()
-  const user = await currentUser()
+  
+  if (!userId) {
+    return null
+  }
 
-  if (!userId || !user) {
-    // 如果没登录，由 layout.tsx 的 SignedOut 处理，或者这里不渲染
+  let user
+  try {
+    user = await currentUser()
+  } catch (e) {
+    console.error('Error fetching current user:', e)
+    return null
+  }
+
+  if (!user) {
     return null
   }
 
@@ -95,15 +105,6 @@ export default async function Home() {
           </h1>
           <p className="mt-2 text-gray-500">今天有什么小希冀想要记录吗？</p>
         </div>
-        <Button
-          asChild
-          className="bg-black text-white hover:bg-gray-800 dark:bg-white dark:text-black"
-        >
-          <Link href="/notes">
-            <PenLine className="mr-2 h-4 w-4" />
-            开始记录
-          </Link>
-        </Button>
       </div>
 
       {/* 统计卡片区域 */}

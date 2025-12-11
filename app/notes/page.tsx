@@ -5,7 +5,7 @@ import { Note, Tag } from '@prisma/client'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 import prisma from '@/lib/prisma'
-import { NoteCard } from '@/components/NoteCard'
+import { NotesList } from '@/components/NotesList'
 import { Button } from '@/components/ui/button'
 
 // 每页显示多少条
@@ -62,18 +62,8 @@ export default async function NotesPage({ searchParams }: NotesPageProps) {
         <span className="text-sm text-gray-500">共 {totalCount} 条</span>
       </div>
 
-      {/* 笔记网格列表 */}
-      {notes.length > 0 ? (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {notes.map((note) => (
-            <NoteCard key={note.id} note={note} />
-          ))}
-        </div>
-      ) : (
-        <div className="py-20 text-center text-gray-500">
-          <p>还没有笔记，点击左侧“新建笔记”开始吧！</p>
-        </div>
-      )}
+      {/* 笔记列表组件 - 处理批量选择 */}
+      <NotesList initialNotes={notes} />
 
       {/* 分页控制栏 */}
       {totalPages > 1 && (

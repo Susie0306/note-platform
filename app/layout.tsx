@@ -131,12 +131,12 @@ export default function RootLayout({
                   <MobileNavWrapper />
 
                   {/* 桌面端侧边栏 (仅在桌面显示) */}
-                  <aside className="bg-background/40 hidden min-h-screen w-64 border-r backdrop-blur-sm md:block">
+                  <aside className="bg-background/40 hidden h-screen w-64 shrink-0 border-r backdrop-blur-sm md:block sticky top-0 overflow-y-auto">
                     <Sidebar />
                   </aside>
 
                   {/* 主内容区域 */}
-                  <main className="flex-1 p-6 md:p-6">{children}</main>
+                  <main className="flex-1 p-6 md:p-6 w-full min-w-0 overflow-x-hidden">{children}</main>
                 </div>
                 <SyncManager />
               </SignedIn>

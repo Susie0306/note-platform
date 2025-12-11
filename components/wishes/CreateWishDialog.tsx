@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { DatePicker } from '@/components/ui/date-picker'
 
 const WISH_TEMPLATES = [
   { title: '去一次说走就走的旅行 ✈️', desc: '探索未知的世界' },
@@ -29,14 +30,20 @@ const WISH_TEMPLATES = [
 export function CreateWishDialog() {
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState('')
+  const [date, setDate] = useState<Date>()
   const [isPending, startTransition] = useTransition()
 
   async function onSubmit(formData: FormData) {
+    if (date) {
+      formData.set('targetDate', date.toISOString())
+    }
+
     startTransition(async () => {
       try {
         await createWish(formData)
         setOpen(false)
         setTitle('')
+        setDate(undefined)
         toast.success('许愿成功！愿望一定会实现✨')
       } catch (error) {
         toast.error('许愿失败，请稍后重试')
@@ -94,13 +101,8 @@ export function CreateWishDialog() {
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="targetDate">目标日期 (可选)</Label>
-            <Input
-              id="targetDate"
-              name="targetDate"
-              type="date"
-              className="col-span-3"
-            />
+            <Label>目标日期 (可选)</Label>
+            <DatePicker date={date} setDate={setDate} />
           </div>
           <DialogFooter>
             <Button type="submit" disabled={isPending} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">

@@ -3,7 +3,7 @@ import { auth } from '@clerk/nextjs/server'
 import { Trash2, FileText, Sparkles } from 'lucide-react'
 
 import prisma from '@/lib/prisma'
-import { TrashNoteCard } from '@/components/TrashNoteCard'
+import { TrashNotesList } from '@/components/TrashNotesList'
 import { TrashWishCard } from '@/components/wishes/TrashWishCard'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
@@ -58,18 +58,7 @@ export default async function TrashPage() {
         </TabsList>
 
         <TabsContent value="notes" className="mt-4">
-          {deletedNotes.length > 0 ? (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {deletedNotes.map((note) => (
-                <TrashNoteCard key={note.id} note={note} />
-              ))}
-            </div>
-          ) : (
-            <div className="py-20 text-center text-gray-400">
-              <Trash2 className="mx-auto mb-4 h-12 w-12 opacity-20" />
-              <p>没有已删除的笔记</p>
-            </div>
-          )}
+          <TrashNotesList initialNotes={deletedNotes} />
         </TabsContent>
 
         <TabsContent value="wishes" className="mt-4">
