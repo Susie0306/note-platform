@@ -1,5 +1,4 @@
-import type { ChatMessage } from '@/components/use-chat';
-import type { UIMessage } from 'ai';
+import type { Message, UIMessage } from 'ai';
 
 import { getMarkdown } from '@platejs/ai';
 import { serializeMd } from '@platejs/markdown';
@@ -153,11 +152,24 @@ export const buildStructuredPrompt = ({
   ]);
 };
 
-export function getTextFromMessage(message: UIMessage): string {
-  return message.parts
-    .filter((part) => part.type === 'text')
-    .map((part) => part.text)
-    .join('');
+export function getTextFromMessage(message: Message | UIMessage): string {
+  // Handle UIMessage (has parts)
+  if ('parts' in message && Array.isArray(message.parts)) {
+    return message.parts
+      .filter((part) => part.type === 'text')
+      .map((part) => part.text)
+      .join('');
+  }
+  // Handle Message (has content)
+  if ('content' in message) {
+    return typeof message.content === 'string' 
+      ? message.content 
+      : message.content
+          .filter((part) => part.type === 'text')
+          .map((part) => part.text)
+          .join('');
+  }
+  return '';
 }
 
 /**
@@ -165,7 +177,7 @@ export function getTextFromMessage(message: UIMessage): string {
  * formats as ROLE: text.
  */
 export function formatTextFromMessages(
-  messages: ChatMessage[],
+  messages: Message[],
   options?: { limit?: number }
 ): string {
   const historyMessages = options?.limit

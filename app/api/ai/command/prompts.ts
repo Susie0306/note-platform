@@ -1,4 +1,4 @@
-import type { ChatMessage } from '@/components/use-chat';
+import type { Message } from 'ai';
 import type { SlateEditor } from 'platejs';
 
 import { getMarkdown } from '@platejs/ai';
@@ -12,7 +12,7 @@ import {
   isMultiBlocks,
 } from './utils';
 
-export function getChooseToolPrompt({ messages }: { messages: ChatMessage[] }) {
+export function getChooseToolPrompt({ messages }: { messages: Message[] }) {
   return buildStructuredPrompt({
     examples: [
       // GENERATE
@@ -45,7 +45,7 @@ export function getCommentPrompt(
   {
     messages,
   }: {
-    messages: ChatMessage[];
+    messages: Message[];
   }
 ) {
   const selectingMarkdown = getMarkdown(editor, {
