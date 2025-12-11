@@ -56,7 +56,9 @@ export function AIToolbarButton() {
         // Safe access to markdown API
         try {
           // PlateJS editor instance structure can vary, check if markdown plugin is available
+          // @ts-ignore: Dynamic access to editor.api.markdown
           if (editor.api && editor.api.markdown && typeof editor.api.markdown.serialize === 'function') {
+            // @ts-ignore: Dynamic access to editor.api.markdown
             context = editor.api.markdown.serialize();
           } else {
              // Fallback: try to just get text content
@@ -98,7 +100,9 @@ export function AIToolbarButton() {
     // Parse markdown content to nodes
     let nodes: any = null;
     try {
+      // @ts-ignore: Dynamic access to editor.api.markdown
       if (editor.api && editor.api.markdown && typeof editor.api.markdown.deserialize === 'function') {
+         // @ts-ignore: Dynamic access to editor.api.markdown
          nodes = editor.api.markdown.deserialize(generatedContent);
       }
     } catch (e) {
