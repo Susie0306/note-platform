@@ -1,9 +1,9 @@
 'use client'
 
-import React, { useState, useTransition } from 'react'
+import React, { useState, useTransition, useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { FileText, Home, Loader2, Menu, Plus, Search, Settings, Sparkles, Trash2 } from 'lucide-react'
 
 // Dynamically import UserButton to avoid SSR hydration issues
@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { createNote } from '@/app/actions/notes'
+import { SidebarNavTree } from '@/components/SidebarNavTree'
 
 // 侧边栏菜单配置
 const sidebarNavItems = [
@@ -52,17 +53,24 @@ const sidebarNavItems = [
 
 type SidebarProps = React.HTMLAttributes<HTMLDivElement> & {
   onNavClick?: () => void
+  folders?: any[]
+  tags?: any[]
 }
 
-export function Sidebar({ className, onNavClick }: SidebarProps) {
+export function Sidebar({ className, onNavClick, folders = [], tags = [] }: SidebarProps) {
   const pathname = usePathname()
+  const router = useRouter()
   const [isPending, startTransition] = useTransition()
+
 
   const handleCreateNote = () => {
     startTransition(async () => {
       try {
-        await createNote() //调用后端逻辑
-        if (onNavClick) onNavClick() //如果在移动端，创建后关闭菜单
+        const result = await createNote() //调用后端逻辑
+        if (result?.noteId) {
+          router.push(`/notes/${result.noteId}`)
+          if (onNavClick) onNavClick() //如果在移动端，创建后关闭菜单
+        }
       } catch (error) {
         console.error('创建笔记失败:', error)
         // 这里以后可以加一个 toast 提示
@@ -70,8 +78,8 @@ export function Sidebar({ className, onNavClick }: SidebarProps) {
     })
   }
   return (
-    <div className={cn('pb-12', className)}>
-      <div className="space-y-4 py-4">
+    <div className={cn('pb-12 h-full flex flex-col', className)}>
+      <div className="space-y-4 py-4 flex-1 flex flex-col">
         <div className="px-3 py-2">
           <div className="mb-2 flex items-center justify-between px-4">
             <h2 className="text-lg font-semibold tracking-tight">我的笔记</h2>
@@ -119,29 +127,12 @@ export function Sidebar({ className, onNavClick }: SidebarProps) {
             </nav>
           </div>
         </div>
-      </div>
-    </div>
-  )
-}
 
-// 移动端专用的顶部导航栏（包含汉堡菜单）
-export function MobileNav() {
-  const [open, setOpen] = useState(false)
-  return (
-    <div className="flex items-center border-b bg-background/80 p-4 backdrop-blur-md md:hidden">
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" className="mr-2">
-            <Menu className="h-6 w-6" />
-            <span className="sr-only">Toggle Menu</span>
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left" className="pr-0">
-          <SheetTitle className="sr-only">导航菜单</SheetTitle>
-          <Sidebar className="pt-4" onNavClick={() => setOpen(false)} />
-        </SheetContent>
-      </Sheet>
-      <span className="text-lg font-bold tracking-tight">熙记</span>
+        {/* 文件夹和标签树 */}
+        <div className="flex-1 overflow-y-auto min-h-0">
+           <SidebarNavTree folders={folders} tags={tags} />
+        </div>
+      </div>
     </div>
   )
 }

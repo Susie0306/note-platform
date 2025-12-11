@@ -22,25 +22,30 @@ export function WishMessage({ wishTitle }: WishMessageProps) {
   }
 
   return (
-    <div className="rounded-lg bg-secondary p-4 text-sm text-secondary-foreground relative group">
+    <div className="rounded-lg bg-secondary p-4 text-sm text-secondary-foreground relative">
       <div className="flex items-center justify-between mb-2">
         <h4 className="font-bold flex items-center gap-2">
           <Sparkles className="h-4 w-4" /> 希冀寄语
         </h4>
         <Button
           variant="ghost"
-          size="icon"
-          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-secondary-foreground/10"
+          size="sm"
+          className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground transition-colors hover:bg-secondary-foreground/10"
           onClick={handleRefresh}
           disabled={isPending}
         >
-          <RefreshCw className={cn("h-3 w-3", isPending && "animate-spin")} />
-          <span className="sr-only">刷新寄语</span>
+          <RefreshCw className={cn("h-3 w-3 mr-1", isPending && "animate-spin")} />
+          换一句
         </Button>
       </div>
       <p className={cn("transition-opacity duration-300", isPending ? "opacity-50" : "opacity-100")}>
         {message}
       </p>
+      <div className="mt-2 text-right">
+        <span className="text-[10px] text-muted-foreground/60">
+          由 DeepSeek-V3.2 支持
+        </span>
+      </div>
     </div>
   )
 }

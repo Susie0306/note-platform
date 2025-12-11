@@ -152,3 +152,5 @@ export function TrashNotesList({ initialNotes }: TrashNotesListProps) {
     </div>
   )
 }
+
+

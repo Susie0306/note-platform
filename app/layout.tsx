@@ -4,7 +4,7 @@ import { zhCN } from '@clerk/localizations'
 import { ClerkProvider, SignedIn, SignedOut, SignInButton, SignUpButton } from '@clerk/nextjs'
 import { Sparkles, Sun } from 'lucide-react'
 
-import { Sidebar } from '@/components/Sidebar'
+import { SidebarWrapper } from '@/components/SidebarWrapper'
 import { GlobalBackground } from '@/components/GlobalBackground'
 
 import './globals.css'
@@ -132,7 +132,7 @@ export default function RootLayout({
 
                   {/* 桌面端侧边栏 (仅在桌面显示) */}
                   <aside className="bg-background/40 hidden h-screen w-64 shrink-0 border-r backdrop-blur-sm md:block sticky top-0 overflow-y-auto">
-                    <Sidebar />
+                    <SidebarWrapper />
                   </aside>
 
                   {/* 主内容区域 */}

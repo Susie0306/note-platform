@@ -15,6 +15,9 @@ interface NotesPageProps {
   // searchParams 在 Next.js 15 中是异步的
   searchParams: Promise<{
     page?: string
+    sort?: string
+    folderId?: string
+    tagId?: string
   }>
 }
 
@@ -31,6 +34,28 @@ export default async function NotesPage({ searchParams }: NotesPageProps) {
   const params = await searchParams
   const currentPage = Number(params.page) || 1
   const skip = (currentPage - 1) * PAGE_SIZE
+  const { folderId, tagId } = params
+
+  // 获取文件夹/标签信息以便显示标题
+  let pageTitle = '我的笔记'
+  if (folderId) {
+    const folder = await prisma.folder.findUnique({ where: { id: folderId } })
+    if (folder) pageTitle = `文件夹：${folder.name}`
+  } else if (tagId) {
+    const tag = await prisma.tag.findUnique({ where: { id: tagId } })
+    if (tag) pageTitle = `标签：${tag.name}`
+  }
+  
+  // 处理排序参数
+  const sort = params.sort || 'updatedAt_desc'
+  let orderBy: any = { updatedAt: 'desc' }
+  switch (sort) {
+    case 'createdAt_desc': orderBy = { createdAt: 'desc' }; break;
+    case 'createdAt_asc': orderBy = { createdAt: 'asc' }; break;
+    case 'updatedAt_asc': orderBy = { updatedAt: 'asc' }; break;
+    case 'updatedAt_desc': 
+    default: orderBy = { updatedAt: 'desc' }; break;
+  }
 
   // 并行查询：获取数据列表 + 总条数 (用于计算总页数)
   // 使用 Promise.all 提高性能
@@ -38,16 +63,33 @@ export default async function NotesPage({ searchParams }: NotesPageProps) {
   let totalCount = 0
 
   if (dbUser) {
+    const where: any = { 
+        userId: dbUser.id, 
+        deletedAt: null 
+    }
+    
+    if (folderId) {
+        where.folderId = folderId
+    }
+    
+    if (tagId) {
+        where.tags = {
+            some: {
+                id: tagId
+            }
+        }
+    }
+
     const [data, count] = await Promise.all([
       prisma.note.findMany({
-        where: { userId: dbUser.id, deletedAt: null },
-        orderBy: { updatedAt: 'desc' },
+        where,
+        orderBy: orderBy,
         take: PAGE_SIZE,
         skip: skip,
         include: { tags: true },
       }),
       prisma.note.count({
-        where: { userId: dbUser.id, deletedAt: null },
+        where,
       }),
     ])
     notes = data
@@ -55,10 +97,21 @@ export default async function NotesPage({ searchParams }: NotesPageProps) {
   }
   const totalPages = Math.ceil(totalCount / PAGE_SIZE)
 
+  // 构建分页链接的 helper
+  const getPageLink = (page: number) => {
+    const searchParamsObj = new URLSearchParams()
+    if (page > 1) searchParamsObj.set('page', page.toString())
+    if (sort !== 'updatedAt_desc') searchParamsObj.set('sort', sort)
+    if (folderId) searchParamsObj.set('folderId', folderId)
+    if (tagId) searchParamsObj.set('tagId', tagId)
+    const queryString = searchParamsObj.toString()
+    return `/notes${queryString ? `?${queryString}` : ''}`
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">我的笔记</h1>
+        <h1 className="text-2xl font-bold">{pageTitle}</h1>
         <span className="text-sm text-gray-500">共 {totalCount} 条</span>
       </div>
 
@@ -71,7 +124,7 @@ export default async function NotesPage({ searchParams }: NotesPageProps) {
           <Button variant="outline" size="icon" disabled={currentPage <= 1} asChild>
             {/* asChild 允许 Button 渲染为 Link，保留按钮样式 */}
             {currentPage > 1 ? (
-              <Link href={`/notes?page=${currentPage - 1}`}>
+              <Link href={getPageLink(currentPage - 1)}>
                 <ChevronLeft className="h-4 w-4" />
               </Link>
             ) : (
@@ -87,7 +140,7 @@ export default async function NotesPage({ searchParams }: NotesPageProps) {
 
           <Button variant="outline" size="icon" disabled={currentPage >= totalPages} asChild>
             {currentPage < totalPages ? (
-              <Link href={`/notes?page=${currentPage + 1}`}>
+              <Link href={getPageLink(currentPage + 1)}>
                 <ChevronRight className="h-4 w-4" />
               </Link>
             ) : (

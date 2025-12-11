@@ -135,7 +135,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       ) : (
         <div className="py-20 text-center text-gray-400">
           <Search className="mx-auto mb-4 h-12 w-12 opacity-20" />
-          <p>输入关键词或点击笔记标签开始搜索...</p>
+          <p>输入标题或内容关键词开始搜索...</p>
         </div>
       )}
     </div>

@@ -1,5 +1,7 @@
 import React from 'react'
 import { notFound } from 'next/navigation'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { getWish } from '@/app/actions/wishes'
 import { LogCreator } from '@/components/wishes/LogCreator'
 import { ProgressUpdater } from '@/components/wishes/ProgressUpdater'
@@ -94,7 +96,7 @@ export default async function WishDetailPage({ params }: PageProps) {
                   </div>
                   
                   {/* 日志卡片 */}
-                  <div className="group rounded-lg border bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
+                  <div className="group rounded-lg border bg-white p-4 shadow-sm transition-shadow hover:shadow-md dark:bg-gray-900">
                     <div className="mb-2 text-xs text-gray-400">
                       {new Date(log.createdAt).toLocaleString('zh-CN', {
                         month: 'short',
@@ -103,7 +105,11 @@ export default async function WishDetailPage({ params }: PageProps) {
                         minute: 'numeric',
                       })}
                     </div>
-                    <div className="whitespace-pre-wrap text-gray-700">{log.content}</div>
+                    <div className="prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {log.content}
+                      </ReactMarkdown>
+                    </div>
                   </div>
                 </div>
               ))

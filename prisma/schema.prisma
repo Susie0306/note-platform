@@ -18,6 +18,7 @@ model User {
 
   notes     Note[]   // 一个人可以有很多笔记
   tags      Tag[]    // 一个人可以有很多标签
+  folders   Folder[] // 一个人可以有很多文件夹
   wishes    Wish[]   // 一个人可以有很多心愿
 }
 
@@ -42,6 +43,9 @@ model Note {
   
   tags      Tag[]    // 一个笔记可以有多个标签
   
+  folderId  String?
+  folder    Folder?  @relation(fields: [folderId], references: [id])
+  
   // P2 AI 检索预留：先不写 vector 类型（配置较复杂），
   // 后续会在这里通过 SQL 扩展添加 embedding 字段。
 
@@ -56,13 +60,39 @@ model Tag {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  parentId String?
+  parent   Tag?   @relation("TagHierarchy", fields: [parentId], references: [id])
+  children Tag[]  @relation("TagHierarchy")
+
   notes  Note[] // 多对多关系：一个标签可以对应多个笔记
 
   @@unique([name, userId]) // 防止同一个用户创建重名标签
   @@index([userId])
 }
 
-// 4. 心愿模型
+// 4. 文件夹模型
+model Folder {
+  id        String   @id @default(uuid())
+  name      String
+  
+  parentId  String?
+  parent    Folder?  @relation("FolderHierarchy", fields: [parentId], references: [id])
+  children  Folder[] @relation("FolderHierarchy")
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  notes     Note[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 确保同一父级下名称唯一（对于根目录，parentId 为 null，Postgres 默认允许多个 null，
+  // 但我们通过业务逻辑控制或复合唯一索引通常在应用层校验更灵活，这里先保留基本索引）
+  @@index([userId])
+}
+
+// 5. 心愿模型
 model Wish {
   id          String    @id @default(uuid())
   title       String
@@ -87,7 +117,7 @@ model Wish {
   @@index([userId])
 }
 
-// 5. 心愿节点记录模型
+// 6. 心愿节点记录模型
 model WishLog {
   id        String   @id @default(uuid())
   content   String   @db.Text
@@ -98,5 +128,3 @@ model WishLog {
   wishId    String
   wish      Wish     @relation(fields: [wishId], references: [id], onDelete: Cascade)
 }
-
-

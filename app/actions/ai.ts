@@ -36,3 +36,37 @@ export async function generateWishMessage(wishTitle: string) {
   }
 }
 
+export async function askAI(command: string, context: string) {
+  try {
+    const completion = await openai.chat.completions.create({
+      messages: [
+        {
+          role: 'system',
+          content: `你是一个专业的笔记助手。请根据用户的指令和当前笔记内容（Markdown格式），协助用户写作。
+          
+          要求：
+          1. 直接返回结果，不要啰嗦。
+          2. 保持 Markdown 格式。
+          3. 如果是续写，请接着上下文自然延续。
+          4. 如果是润色，请保持原意但优化措辞。
+          5. 如果是总结，请简明扼要。`
+        },
+        {
+          role: 'user',
+          content: `当前笔记内容：
+${context}
+
+指令：${command}`
+        }
+      ],
+      model: 'deepseek-chat',
+      temperature: 0.7,
+    })
+
+    return completion.choices[0].message.content || ''
+  } catch (error) {
+    console.error('AI request failed:', error)
+    throw new Error('AI 请求失败')
+  }
+}
+

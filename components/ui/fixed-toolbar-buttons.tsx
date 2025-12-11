@@ -20,6 +20,7 @@ import { useEditorReadOnly } from 'platejs/react';
 import { CommentToolbarButton } from './comment-toolbar-button';
 import { EmojiToolbarButton } from './emoji-toolbar-button';
 import { ExportToolbarButton } from './export-toolbar-button';
+import { AIToolbarButton } from './ai-toolbar-button';
 import { FontColorToolbarButton } from './font-color-toolbar-button';
 import { FontSizeToolbarButton } from './font-size-toolbar-button';
 import { RedoToolbarButton, UndoToolbarButton } from './history-toolbar-button';
@@ -45,6 +46,10 @@ export function FixedToolbarButtons() {
     <div className="flex w-full">
       {!readOnly && (
         <>
+          <ToolbarGroup>
+            <AIToolbarButton />
+          </ToolbarGroup>
+
           <ToolbarGroup>
             <UndoToolbarButton />
             <RedoToolbarButton />

@@ -1,24 +1,52 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Note, Tag } from '@prisma/client'
-import { Trash2, X, CheckSquare, Square, Loader2 } from 'lucide-react'
+import { Trash2, X, CheckSquare, Square, Loader2, ArrowUpDown, Check, ArrowUp, ArrowDown } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { NoteCard } from '@/components/NoteCard'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { bulkDeleteNotes } from '@/app/actions/notes'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 interface NotesListProps {
   initialNotes: (Note & { tags: Tag[] })[]
 }
 
 export function NotesList({ initialNotes }: NotesListProps) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const [isSelectionMode, setIsSelectionMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [isPending, startTransition] = useTransition()
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+
+  const currentSort = searchParams.get('sort') || 'updatedAt_desc'
+  const [field, order] = currentSort.split('_')
+
+  const handleSortChange = (newSort: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('sort', newSort)
+    params.delete('page')
+    router.push(`/notes?${params.toString()}`)
+  }
+
+  const toggleOrder = () => {
+    const newOrder = order === 'asc' ? 'desc' : 'asc'
+    handleSortChange(`${field}_${newOrder}`)
+  }
+
+  const handleFieldChange = (newField: string) => {
+    handleSortChange(`${newField}_${order}`)
+  }
 
   const toggleSelectionMode = () => {
     setIsSelectionMode(!isSelectionMode)
@@ -70,6 +98,39 @@ export function NotesList({ initialNotes }: NotesListProps) {
         </div>
         
         <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 rounded-md border bg-background p-1 shadow-sm">
+             <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs font-normal">
+                  {field === 'updatedAt' ? '按更新时间' : '按创建时间'}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuItem onClick={() => handleFieldChange('updatedAt')}>
+                  <div className="flex w-full items-center justify-between">
+                    <span>更新时间</span>
+                    {field === 'updatedAt' && <Check className="h-4 w-4" />}
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleFieldChange('createdAt')}>
+                  <div className="flex w-full items-center justify-between">
+                    <span>创建时间</span>
+                    {field === 'createdAt' && <Check className="h-4 w-4" />}
+                  </div>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-7 w-7" 
+              onClick={toggleOrder}
+            >
+              <ArrowUpDown className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+
           {isSelectionMode ? (
             <>
               <Button variant="ghost" size="sm" onClick={toggleSelectAll}>
@@ -129,3 +190,5 @@ export function NotesList({ initialNotes }: NotesListProps) {
     </div>
   )
 }
+
+

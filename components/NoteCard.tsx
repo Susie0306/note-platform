@@ -7,12 +7,15 @@ import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import { Trash2 } from 'lucide-react'
 
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { deleteNote } from '@/app/actions/notes'
+import { FolderSelector } from '@/components/FolderSelector'
 
 // 定义 Props 类型，这里直接对应 Prisma 返回的数据结构
 interface NoteCardProps {
@@ -22,17 +25,20 @@ interface NoteCardProps {
     content: string | null
     createdAt: Date
     tags: { id: string; name: string }[]
+    folderId?: string | null
   }
   isSelectionMode?: boolean
   isSelected?: boolean
   onSelectChange?: (checked: boolean) => void
+  onUpdate?: () => void
 }
 
 export function NoteCard({ 
   note, 
   isSelectionMode = false,
   isSelected = false,
-  onSelectChange
+  onSelectChange,
+  onUpdate
 }: NoteCardProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -78,8 +84,8 @@ export function NoteCard({
         </div>
       )}
 
-      <Link href={`/notes/${note.id}`} className="block h-full">
-        <Card className={`group relative flex h-full cursor-pointer flex-col transition-shadow hover:shadow-md ${isSelected ? 'ring-2 ring-primary border-primary' : ''}`}>
+      <Card className={`group relative flex h-full flex-col transition-shadow hover:shadow-md ${isSelected ? 'ring-2 ring-primary border-primary' : ''}`}>
+        <Link href={`/notes/${note.id}`} className="flex flex-1 flex-col cursor-pointer">
           <CardHeader>
             <CardTitle className="line-clamp-1 text-lg pr-6">{note.title || '无标题笔记'}</CardTitle>
           </CardHeader>
@@ -98,45 +104,76 @@ export function NoteCard({
                 ))}
               </div>
             )}
-            {/* 简单的文本截断，显示前3行 */}
-            <p className="line-clamp-3 h-[4.5em] text-sm text-gray-500">
-              {note.content || '暂无内容...'}
-            </p>
+            {/* Markdown 预览区域 */}
+            <div className="relative h-[4.5em] overflow-hidden text-sm text-gray-500">
+              <div className="prose prose-sm dark:prose-invert pointer-events-none max-w-none [&>*:first-child]:mt-0">
+                <ReactMarkdown 
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    // 禁用图片渲染或限制图片大小，避免破坏卡片布局
+                    img: ({node, ...props}) => <span className="text-xs text-muted-foreground">[图片]</span>,
+                    // 简化标题显示，避免太大
+                    h1: ({node, ...props}) => <p className="font-bold text-base mb-1" {...props} />,
+                    h2: ({node, ...props}) => <p className="font-bold text-base mb-1" {...props} />,
+                    h3: ({node, ...props}) => <p className="font-bold text-base mb-1" {...props} />,
+                    // 确保列表紧凑
+                    ul: ({node, ...props}) => <ul className="my-0.5 pl-4 list-disc" {...props} />,
+                    ol: ({node, ...props}) => <ol className="my-0.5 pl-4 list-decimal" {...props} />,
+                    li: ({node, ...props}) => <li className="my-0" {...props} />,
+                    p: ({node, ...props}) => <p className="my-0.5 leading-snug" {...props} />,
+                  }}
+                >
+                  {note.content || '暂无内容...'}
+                </ReactMarkdown>
+              </div>
+            </div>
           </CardContent>
-          <CardFooter className="flex items-center justify-between text-xs text-gray-400">
+        </Link>
+        <CardFooter className="flex items-center justify-between text-xs text-gray-400">
+          <div className="flex items-center gap-2">
             <span>
               {formatDistanceToNow(new Date(note.createdAt), {
                 addSuffix: true,
                 locale: zhCN,
               })}
             </span>
+            <div onClick={(e) => {
+              // 这里的阻止冒泡可能不再严格需要，但保留也无妨，防止向上冒泡到 Card 可能存在的其他事件
+              e.stopPropagation()
+            }}>
+              <FolderSelector 
+                noteId={note.id} 
+                currentFolderId={note.folderId}
+                onUpdate={onUpdate}
+              />
+            </div>
+          </div>
 
-            {/* 删除按钮 - 只有鼠标悬停时才显示，或者一直显示也可 */}
-            {/* 在选择模式下隐藏单个删除按钮，以免混淆 */}
-            {!isSelectionMode && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-red-500 opacity-0 transition-opacity group-hover:opacity-100"
-                onClick={handleDeleteClick}
-                disabled={isPending}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            )}
+          {/* 删除按钮 - 只有鼠标悬停时才显示，或者一直显示也可 */}
+          {/* 在选择模式下隐藏单个删除按钮，以免混淆 */}
+          {!isSelectionMode && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-red-500 opacity-0 transition-opacity group-hover:opacity-100"
+              onClick={handleDeleteClick}
+              disabled={isPending}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
 
-            <ConfirmDialog
-              open={showDeleteDialog}
-              onOpenChange={setShowDeleteDialog}
-              title="删除笔记"
-              description="确定要将这条笔记移至回收站吗？可以在回收站中恢复。"
-              onConfirm={handleConfirmDelete}
-              variant="destructive"
-              loading={isPending}
-            />
-          </CardFooter>
-        </Card>
-      </Link>
+          <ConfirmDialog
+            open={showDeleteDialog}
+            onOpenChange={setShowDeleteDialog}
+            title="删除笔记"
+            description="确定要将这条笔记移至回收站吗？可以在回收站中恢复。"
+            onConfirm={handleConfirmDelete}
+            variant="destructive"
+            loading={isPending}
+          />
+        </CardFooter>
+      </Card>
     </div>
   )
 }

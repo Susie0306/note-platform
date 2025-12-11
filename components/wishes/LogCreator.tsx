@@ -4,9 +4,11 @@ import React, { useState, useTransition } from 'react'
 import { createWishLog } from '@/app/actions/wishes'
 import { Loader2, Send } from 'lucide-react'
 import { toast } from 'sonner'
+import { Plate, usePlateEditor } from 'platejs/react'
 
+import { EditorKit } from '@/components/editor-kit'
+import { Editor } from '@/components/ui/editor'
 import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
 
 interface LogCreatorProps {
   wishId: string
@@ -16,6 +18,13 @@ export function LogCreator({ wishId }: LogCreatorProps) {
   const [content, setContent] = useState('')
   const [isPending, startTransition] = useTransition()
 
+  const editor = usePlateEditor({
+    plugins: EditorKit.filter(
+      (p) => p.key !== 'fixed-toolbar' && p.key !== 'floating-toolbar'
+    ),
+    value: [{ type: 'p', children: [{ text: '' }] }],
+  })
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!content.trim()) return
@@ -23,7 +32,11 @@ export function LogCreator({ wishId }: LogCreatorProps) {
     startTransition(async () => {
       try {
         await createWishLog(wishId, content)
+        // Reset state
         setContent('')
+        // Reset editor content
+        editor.tf.setValue([{ type: 'p', children: [{ text: '' }] }])
+        
         toast.success('记录成功')
       } catch (error) {
         toast.error('记录失败')
@@ -32,18 +45,25 @@ export function LogCreator({ wishId }: LogCreatorProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="relative">
-      <div className="overflow-hidden rounded-lg border bg-white shadow-sm focus-within:ring-2 focus-within:ring-primary/20">
-        <Textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="写下这一刻的心情、进展或感悟..."
-          className="min-h-[100px] resize-none border-none focus-visible:ring-0"
-        />
-        <div className="flex items-center justify-between border-t bg-gray-50/50 px-3 py-2">
-          <span className="text-xs text-gray-400">支持 Markdown 语法</span>
+    <div className="relative">
+      <div className="overflow-hidden rounded-lg border bg-white shadow-sm focus-within:ring-2 focus-within:ring-primary/20 dark:bg-gray-950">
+        <Plate
+          editor={editor}
+          onValueChange={() => {
+            const md = editor.api.markdown.serialize()
+            setContent(md)
+          }}
+        >
+          <Editor
+            variant="none"
+            placeholder="写下这一刻的心情、进展或感悟..."
+            className="min-h-[100px] w-full resize-none border-none p-3 focus-visible:outline-none focus-visible:ring-0"
+          />
+        </Plate>
+        <div className="flex items-center justify-between border-t bg-gray-50/50 px-3 py-2 dark:bg-gray-900/50">
+          <span className="text-xs text-gray-400">支持 Markdown 快捷语法 (如 # 标题)</span>
           <Button
-            type="submit"
+            onClick={handleSubmit}
             size="sm"
             disabled={isPending || !content.trim()}
             className="bg-primary text-primary-foreground hover:bg-primary/90"
@@ -57,7 +77,7 @@ export function LogCreator({ wishId }: LogCreatorProps) {
           </Button>
         </div>
       </div>
-    </form>
+    </div>
   )
 }
 

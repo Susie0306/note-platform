@@ -42,8 +42,8 @@ export async function createNote() {
     },
   })
 
-  //创建成功后，重定向到笔记详情页（编辑页）
-  redirect(`/notes/${note.id}`)
+  //创建成功后，返回笔记 ID
+  return { success: true, noteId: note.id }
 }
 
 export async function updateNote(
@@ -93,6 +93,34 @@ export async function updateNote(
 
   // 这里不 redirect是因为用户可能还在编辑
   // 静默保存
+  revalidatePath('/notes')
+  return { success: true }
+}
+
+// 移动笔记到文件夹
+export async function updateNoteFolder(noteId: string, folderId: string | null) {
+  const { userId } = await auth()
+  if (!userId) throw new Error('Unauthorized')
+
+  // 验证用户和笔记所有权
+  const dbUser = await prisma.user.findUnique({ where: { clerkId: userId } })
+  if (!dbUser) throw new Error('User not found')
+
+  // 验证文件夹（如果存在）属于用户
+  if (folderId) {
+    const folder = await prisma.folder.findUnique({
+      where: { id: folderId }
+    })
+    if (!folder || folder.userId !== dbUser.id) {
+      throw new Error('Invalid folder')
+    }
+  }
+
+  await prisma.note.update({
+    where: { id: noteId, userId: dbUser.id },
+    data: { folderId }
+  })
+
   revalidatePath('/notes')
   return { success: true }
 }

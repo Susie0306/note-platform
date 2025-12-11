@@ -1,31 +1,29 @@
 'use client'
 
-import dynamic from 'next/dynamic'
-import { Menu } from 'lucide-react'
-
+// 移动端专用的顶部导航栏（包含汉堡菜单）
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { Menu } from 'lucide-react'
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
+import { SidebarWrapper } from '@/components/SidebarWrapper'
 
-//定义一个“骨架屏”组件
-function MobileNavSkeleton() {
+export function MobileNavWrapper() {
+  const [open, setOpen] = useState(false)
   return (
-    <div className="flex items-center border-b p-4 md:hidden">
-      {/* 用一个不可点击的按钮占位 */}
-      <Button variant="ghost" size="icon" className="mr-2" disabled>
-        <Menu className="h-6 w-6 opacity-50" />
-      </Button>
-      {/* 标题占位 */}
+    <div className="flex items-center border-b bg-background/80 p-4 backdrop-blur-md md:hidden sticky top-0 z-50">
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetTrigger asChild>
+          <Button variant="ghost" size="icon" className="mr-2">
+            <Menu className="h-6 w-6" />
+            <span className="sr-only">Toggle Menu</span>
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="pr-0 w-72">
+          <SheetTitle className="sr-only">导航菜单</SheetTitle>
+          <SidebarWrapper className="pt-4 h-full" onNavClick={() => setOpen(false)} />
+        </SheetContent>
+      </Sheet>
       <span className="text-lg font-bold tracking-tight">熙记</span>
     </div>
   )
-}
-
-//动态引入，配置 ssr: false 和 loading
-const MobileNav = dynamic(() => import('@/components/Sidebar').then((mod) => mod.MobileNav), {
-  ssr: false,
-  //在 JS 加载前，先由服务器渲染这个骨架屏占位
-  loading: () => <MobileNavSkeleton />,
-})
-
-export function MobileNavWrapper() {
-  return <MobileNav />
 }

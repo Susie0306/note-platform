@@ -17,6 +17,7 @@ import {
 import { PlateEditor } from '@/components/editor/plate-editor'
 import { ShareButton } from '@/components/ShareButton'
 import { TagInput } from '@/components/TagInput'
+import { FolderSelector } from '@/components/FolderSelector'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { RoomProvider, useMyPresence, useOthers } from '@/lib/liveblocks.config'
@@ -28,6 +29,7 @@ interface NoteEditorProps {
   initialContent: string
   initialTags: string[]
   initialCreatedAt: Date
+  initialFolderId?: string | null
 }
 
 interface CollaborativeNoteEditorProps extends NoteEditorProps {
@@ -95,6 +97,7 @@ function NoteEditorContent({
   initialContent,
   initialTags,
   initialCreatedAt,
+  initialFolderId,
   roomId,
   userName,
   userColor,
@@ -103,6 +106,7 @@ function NoteEditorContent({
   const [title, setTitle] = useState(initialTitle || '')
   const [content, setContent] = useState(initialContent || '')
   const [tags, setTags] = useState<string[]>(initialTags || [])
+  const [folderId, setFolderId] = useState<string | null>(initialFolderId || null)
 
   // 保存状态
   const [isSaving, startTransition] = useTransition()
@@ -228,6 +232,11 @@ function NoteEditorContent({
               </div>
               <span className="text-[10px] text-muted-foreground leading-none">{others.length + 1} 人在线</span>
             </div>
+            <FolderSelector 
+              noteId={noteId} 
+              currentFolderId={folderId} 
+              onChange={setFolderId}
+            />
             <ShareButton />
             {isSaving ? (
               <span className="flex items-center gap-1 text-blue-600 dark:text-blue-400">
