@@ -53,7 +53,19 @@ export function AIToolbarButton() {
     
     // Fallback to full content if no selection
     if (!context) {
-        context = editor.api.markdown.serialize();
+        // Safe access to markdown API
+        try {
+          // PlateJS editor instance structure can vary, check if markdown plugin is available
+          if (editor.api && editor.api.markdown && typeof editor.api.markdown.serialize === 'function') {
+            context = editor.api.markdown.serialize();
+          } else {
+             // Fallback: try to just get text content
+             context = (editor.children || []).map((n: any) => n.text || '').join('\n');
+          }
+        } catch (e) {
+          console.warn('Failed to serialize markdown:', e);
+        }
+        
         isFull = true;
     }
 
@@ -84,7 +96,14 @@ export function AIToolbarButton() {
     editor.tf.focus();
     
     // Parse markdown content to nodes
-    const nodes = editor.api.markdown.deserialize(generatedContent);
+    let nodes: any = null;
+    try {
+      if (editor.api && editor.api.markdown && typeof editor.api.markdown.deserialize === 'function') {
+         nodes = editor.api.markdown.deserialize(generatedContent);
+      }
+    } catch (e) {
+      console.warn('Failed to deserialize markdown:', e);
+    }
 
     if (mode === 'replace') {
       if (isFullContentMode) {
