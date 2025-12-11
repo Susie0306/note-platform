@@ -137,6 +137,7 @@ export function AIToolbarButton() {
       }
       
       if (nodes) {
+          // @ts-ignore: Dynamic call
           editor.insertFragment(nodes);
       } else {
           editor.insertText(generatedContent);
@@ -158,6 +159,7 @@ export function AIToolbarButton() {
       editor.insertText('\n\n');
       
       if (nodes) {
+          // @ts-ignore: Dynamic call
           editor.insertFragment(nodes);
       } else {
           editor.insertText(generatedContent);
