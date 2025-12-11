@@ -119,11 +119,15 @@ export function AIToolbarButton() {
           // Let's manually construct a range for the whole document to be safe.
           if (editor.children.length > 0) {
              try {
+                // @ts-ignore
                 const start = editor.api.start([]);
+                // @ts-ignore
                 const end = editor.api.end([]);
+                // @ts-ignore
                 editor.tf.select({ anchor: start, focus: end });
              } catch (e) {
                 // Fallback
+                // @ts-ignore
                 editor.tf.select([]);
              }
           }
