@@ -19,15 +19,8 @@ const nextConfig: NextConfig = {
     config.resolve.alias['yjs$'] = path.resolve(__dirname, 'node_modules/yjs/dist/yjs.mjs')
     return config
   },
-  experimental: {
-    // Force usage of webpack to support our alias fix, bypassing Turbopack for now
-    // Or we can try to configure Turbopack aliases if we knew how, but Webpack is safer for Yjs compat.
-    turbo: {
-        resolveAlias: {
-            'yjs': 'node_modules/yjs/dist/yjs.mjs',
-        }
-    }
-  }
+  // Note: turbo config removed as it's not supported in Next.js 16
+  // We're using webpack with alias instead (see webpack config above)
 }
 
 export default nextConfig

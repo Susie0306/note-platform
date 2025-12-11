@@ -1,4 +1,4 @@
-import type { Message, UIMessage } from 'ai';
+import type { CoreMessage, UIMessage } from 'ai';
 
 import { getMarkdown } from '@platejs/ai';
 import { serializeMd } from '@platejs/markdown';
@@ -152,7 +152,7 @@ export const buildStructuredPrompt = ({
   ]);
 };
 
-export function getTextFromMessage(message: Message | UIMessage): string {
+export function getTextFromMessage(message: CoreMessage | UIMessage): string {
   // Handle UIMessage (has parts)
   if ('parts' in message && Array.isArray(message.parts)) {
     return message.parts
@@ -160,7 +160,7 @@ export function getTextFromMessage(message: Message | UIMessage): string {
       .map((part) => part.text)
       .join('');
   }
-  // Handle Message (has content)
+  // Handle CoreMessage (has content)
   if ('content' in message) {
     return typeof message.content === 'string' 
       ? message.content 
@@ -177,7 +177,7 @@ export function getTextFromMessage(message: Message | UIMessage): string {
  * formats as ROLE: text.
  */
 export function formatTextFromMessages(
-  messages: Message[],
+  messages: CoreMessage[],
   options?: { limit?: number }
 ): string {
   const historyMessages = options?.limit

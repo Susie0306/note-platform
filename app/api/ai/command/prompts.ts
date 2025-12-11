@@ -1,4 +1,4 @@
-import type { Message } from 'ai';
+import type { CoreMessage } from 'ai';
 import type { SlateEditor } from 'platejs';
 
 import { getMarkdown } from '@platejs/ai';
@@ -12,7 +12,7 @@ import {
   isMultiBlocks,
 } from './utils';
 
-export function getChooseToolPrompt({ messages }: { messages: Message[] }) {
+export function getChooseToolPrompt({ messages }: { messages: CoreMessage[] }) {
   return buildStructuredPrompt({
     examples: [
       // GENERATE
@@ -45,7 +45,7 @@ export function getCommentPrompt(
   {
     messages,
   }: {
-    messages: Message[];
+    messages: CoreMessage[];
   }
 ) {
   const selectingMarkdown = getMarkdown(editor, {
@@ -174,7 +174,7 @@ export function getCommentPrompt(
 
 export function getGeneratePrompt(
   editor: SlateEditor,
-  { messages }: { messages: ChatMessage[] }
+  { messages }: { messages: CoreMessage[] }
 ) {
   if (!isMultiBlocks(editor)) {
     addSelection(editor);
@@ -229,7 +229,7 @@ export function getGeneratePrompt(
 
 export function getEditPrompt(
   editor: SlateEditor,
-  { isSelecting, messages }: { isSelecting: boolean; messages: ChatMessage[] }
+  { isSelecting, messages }: { isSelecting: boolean; messages: CoreMessage[] }
 ) {
   if (!isSelecting)
     throw new Error('Edit tool is only available when selecting');
