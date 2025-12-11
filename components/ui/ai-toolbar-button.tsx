@@ -45,6 +45,7 @@ export function AIToolbarButton() {
     
     // Try to get selection first
     if (editor.selection) {
+       // @ts-ignore: Dynamic access to editor.api
        const fragment = editor.api.string(editor.selection);
        if (fragment) {
          context = fragment;
@@ -95,6 +96,7 @@ export function AIToolbarButton() {
 
   const handleApply = (mode: 'replace' | 'insert') => {
     // Restore focus to editor first
+    // @ts-ignore: Dynamic call
     editor.tf.focus();
     
     // Parse markdown content to nodes
@@ -112,6 +114,7 @@ export function AIToolbarButton() {
     if (mode === 'replace') {
       if (isFullContentMode) {
           // Select all content if we were operating on full content
+          // @ts-ignore: Dynamic call
           editor.tf.select([]); 
           // Note: In some versions of Plate/Slate select([]) selects empty range at start.
           // If that fails, we might need a more robust way to select all, but let's try standard approach first.
@@ -133,6 +136,7 @@ export function AIToolbarButton() {
           }
       } else if (savedSelectionRef.current) {
           // Restore original selection
+          // @ts-ignore: Dynamic call
           editor.tf.select(savedSelectionRef.current);
       }
       
@@ -140,28 +144,35 @@ export function AIToolbarButton() {
           // @ts-ignore: Dynamic call
           editor.insertFragment(nodes);
       } else {
+          // @ts-ignore: Dynamic call
           editor.insertText(generatedContent);
       }
     } else {
       // 移动光标到末尾并插入
       if (savedSelectionRef.current) {
           // Restore selection first so we have a reference point
+           // @ts-ignore: Dynamic call
            editor.tf.select(savedSelectionRef.current);
            // Collapse to end of selection
+           // @ts-ignore: Dynamic call
            editor.tf.collapse({ edge: 'end' });
       } else {
            // If no previous selection, just go to end of document
+           // @ts-ignore: Dynamic call
            editor.tf.select([]);
+           // @ts-ignore: Dynamic call
            editor.tf.collapse({ edge: 'end' });
       }
       
       // 插入换行
+      // @ts-ignore: Dynamic call
       editor.insertText('\n\n');
       
       if (nodes) {
           // @ts-ignore: Dynamic call
           editor.insertFragment(nodes);
       } else {
+          // @ts-ignore: Dynamic call
           editor.insertText(generatedContent);
       }
     }
@@ -250,5 +261,3 @@ export function AIToolbarButton() {
     </>
   );
 }
-
-
