@@ -1,29 +1,17 @@
-'use client'
+'use client';
 
-import React from 'react'
+import { cn } from '@/lib/utils';
 
-import { cn } from '@/lib/utils'
-import { Toolbar } from '@/components/ui/toolbar'
+import { Toolbar } from './toolbar';
 
-export function FixedToolbar({
-  children,
-  className,
-}: {
-  children: React.ReactNode
-  className?: string
-}) {
+export function FixedToolbar(props: React.ComponentProps<typeof Toolbar>) {
   return (
-    // 外部容器：负责定位（吸顶）和居中
-    <div className="sticky top-4 z-50 mx-auto mb-4 w-fit transition-all duration-500 ease-in-out">
-      {/* 内部 Toolbar：负责磨砂玻璃效果、圆角、边框和阴影 */}
-      <Toolbar
-        className={cn(
-          'bg-background/95 supports-[backdrop-filter]:bg-background/60 flex items-center gap-1 rounded-full border p-1 px-2 shadow-md backdrop-blur dark:bg-zinc-900/80',
-          className
-        )}
-      >
-        {children}
-      </Toolbar>
-    </div>
-  )
+    <Toolbar
+      {...props}
+      className={cn(
+        'scrollbar-hide sticky top-0 left-0 z-50 w-full justify-between overflow-x-auto rounded-t-lg border-b border-b-border bg-background/95 p-1 backdrop-blur-sm supports-backdrop-blur:bg-background/60',
+        props.className
+      )}
+    />
+  );
 }

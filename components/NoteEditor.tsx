@@ -15,6 +15,7 @@ import {
 } from '@/lib/indexeddb'
 // ✅ 引用新的、优化后的编辑器组件
 import { PlateEditor } from '@/components/editor/plate-editor'
+import { ShareButton } from '@/components/ShareButton'
 import { TagInput } from '@/components/TagInput'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -226,6 +227,7 @@ function NoteEditorContent({
               </div>
               <span>{others.length + 1} 人在线</span>
             </div>
+            <ShareButton />
             {isSaving ? (
               <span className="flex items-center gap-1 text-blue-500">
                 <Cloud className="h-4 w-4 animate-pulse" /> 保存中...

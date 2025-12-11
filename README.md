@@ -1,36 +1,8 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+熙记——以笔记为载体，守护每一份小希冀
+“记录生活中的每一点小希冀”，熙记在线知识笔记平台以用户情感需求与实用需求为双核心，构建兼具功能性与温度感的产品生态。产品研发将围绕 “基础笔记筑牢使用根基、特色功能传递情感价值、跨端同步保障使用流畅” 三大方向展开，让每一次记录都成为奔赴美好的见证。
+基础笔记功能聚焦 “多元记录、高效管理”。支持多格式编辑，涵盖文字、图片、语音、手写涂鸦、文件附件等形式，用户可随手记录灵感闪现的感悟、工作学习的知识点，或是旅行中的风景与心情，打破单一记录局限。搭配智能分类与标签体系，用户可自定义文件夹分类，同时设置多级标签，如 “职场技能 - Excel 技巧”“生活希冀 - 旅行计划”，结合关键词搜索与标签筛选，快速定位所需内容，解决笔记杂乱难找的痛点。此外，加入版本回溯功能，自动保存编辑历史，避免误删或修改失误导致的内容丢失，让记录更安心。
+特色功能深度贴合 “小希冀” 核心诉求，赋予笔记情感温度。心愿追踪模块允许用户创建带时间轴的心愿笔记，设定目标节点与完成期限，例如 “3 个月学会弹吉他”“年底打卡 5 个城市”，系统会定期推送进度提醒，用户可记录每一步进展与感悟，通过图文结合的形式直观呈现心愿实现过程。回忆提醒功能支持设置时间触发点，用户可标记 “去年今日的小确幸”“生日许下的愿望”，到点后收到温馨提醒，重温过往希冀，感受时光里的成长与美好。同时，加入 “希冀清单” 模板，提供旅行规划、学习目标、生活打卡等预设格式，降低用户记录门槛，让每一份小期待都有处安放。
+跨设备同步是提升用户体验的关键保障。熙记将实现手机、平板、电脑多端数据实时同步，支持离线编辑，联网后自动更新，确保用户在任何场景下都能随时记录、查看心愿与笔记。同步过程采用加密技术，保障用户内容安全，同时优化同步速度，避免因网络问题影响使用体验。此外，支持数据导出功能，用户可将笔记与心愿记录导出为文档格式备份，满足多样化存储需求。
+熙记不止是一款知识笔记工具，更是守护用户生活希冀的情感载体。通过基础功能的实用性、特色功能的情感化、跨端同步的便捷性，让每一次记录都充满意义，每一份小希冀都能被看见、被追踪、被实现，成为用户生活中不可或缺的 “美好见证者”。
 
-## Getting Started
 
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

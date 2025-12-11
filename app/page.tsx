@@ -41,11 +41,23 @@ export default async function Home() {
   // 如果是新用户，还没同步到本地库
   if (!dbUser) {
     return (
-      <div className="flex h-full flex-col items-center justify-center space-y-4">
-        <h2 className="text-2xl font-bold">欢迎来到熙记</h2>
-        <p className="text-gray-500">正在初始化您的空间...</p>
-        <Button asChild>
-          <Link href="/notes">开始记录</Link>
+      <div className="flex min-h-[60vh] flex-col items-center justify-center space-y-6 px-4 text-center">
+        <div className="space-y-2">
+          <h2 className="text-3xl font-bold tracking-tight">欢迎来到熙记</h2>
+          <p className="text-muted-foreground text-lg">
+            以笔记为载体，守护每一份小希冀
+          </p>
+        </div>
+
+        <div className="max-w-xl space-y-4 text-gray-500">
+          <p>
+            在这里，您可以记录生活点滴，通过<span className="font-semibold text-gray-900 dark:text-gray-100">心愿追踪</span>记录奔赴美好的过程，
+            也会在不经意间收到<span className="font-semibold text-gray-900 dark:text-gray-100">回忆胶囊</span>的温馨提醒。
+          </p>
+        </div>
+
+        <Button asChild size="lg" className="mt-4">
+          <Link href="/notes">开始您的记录之旅</Link>
         </Button>
       </div>
     )
