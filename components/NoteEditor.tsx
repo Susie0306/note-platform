@@ -210,14 +210,14 @@ function NoteEditorContent({
     <div className="flex h-[calc(100dvh-130px)] flex-col space-y-4">
       {/* 顶部元数据栏 */}
       <div className="flex flex-col gap-2">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="无标题笔记"
-            className="placeholder:text-muted-foreground/50 h-auto w-full min-w-0 border-none px-0 text-4xl sm:text-5xl md:text-5xl font-extrabold tracking-tight shadow-none focus-visible:ring-0"
+            className="placeholder:text-muted-foreground/50 h-auto w-full min-w-0 border-none px-0 text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight shadow-none focus-visible:ring-0"
           />
-          <div className="flex items-center gap-3 text-sm text-muted-foreground/80">
+          <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground/80">
             <div className="flex flex-col items-center justify-center gap-0.5">
               <div className="flex -space-x-2">
                 {collaboratorAvatars.slice(0, 4).map((member) => (
@@ -238,32 +238,35 @@ function NoteEditorContent({
               onChange={setFolderId}
             />
             <ShareButton />
-            {isSaving ? (
-              <span className="flex items-center gap-1 text-blue-600 dark:text-blue-400">
-                <Cloud className="h-4 w-4 animate-pulse" /> 保存中...
-              </span>
-            ) : lastSaved ? (
-              <span className="flex items-center gap-1 text-muted-foreground">
-                {saveLocation === 'local' ? (
-                  <HardDrive className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-                ) : (
-                  <Cloud className="h-4 w-4 text-green-600 dark:text-green-400" />
-                )}
-                {saveLocation === 'local' ? '已存本地' : '已同步'} {lastSaved.toLocaleTimeString()}
-              </span>
-            ) : (
-              <span className="flex items-center gap-1 text-muted-foreground">
-                <CloudOff className="h-4 w-4" /> 未保存
-              </span>
-            )}
+            <div className="flex items-center gap-1 text-xs sm:text-sm">
+              {isSaving ? (
+                <span className="flex items-center gap-1 text-blue-600 dark:text-blue-400">
+                  <Cloud className="h-3 w-3 sm:h-4 sm:w-4 animate-pulse" /> 保存中...
+                </span>
+              ) : lastSaved ? (
+                <span className="flex items-center gap-1 text-muted-foreground">
+                  {saveLocation === 'local' ? (
+                    <HardDrive className="h-3 w-3 sm:h-4 sm:w-4 text-orange-600 dark:text-orange-400" />
+                  ) : (
+                    <Cloud className="h-3 w-3 sm:h-4 sm:w-4 text-green-600 dark:text-green-400" />
+                  )}
+                  <span className="hidden xs:inline">{saveLocation === 'local' ? '已存本地' : '已同步'}</span>
+                  {lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              ) : (
+                <span className="flex items-center gap-1 text-muted-foreground">
+                  <CloudOff className="h-3 w-3 sm:h-4 sm:w-4" /> 未保存
+                </span>
+              )}
+            </div>
             <Button
               onClick={handleManualSave}
               disabled={isSaving}
               variant="outline"
               size="sm"
-              className="ml-2 border-input bg-background hover:bg-background hover:text-foreground text-foreground shadow-sm"
+              className="ml-auto md:ml-2 border-input bg-background hover:bg-background hover:text-foreground text-foreground shadow-sm"
             >
-              <Save className="mr-2 h-4 w-4" /> 保存
+              <Save className="mr-2 h-4 w-4" /> <span className="hidden sm:inline">保存</span>
             </Button>
           </div>
         </div>

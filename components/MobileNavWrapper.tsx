@@ -5,9 +5,14 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Menu } from 'lucide-react'
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
-import { SidebarWrapper } from '@/components/SidebarWrapper'
+import { Sidebar } from '@/components/Sidebar'
 
-export function MobileNavWrapper() {
+interface MobileNavWrapperProps {
+  folders: any[]
+  tags: any[]
+}
+
+export function MobileNavWrapper({ folders, tags }: MobileNavWrapperProps) {
   const [open, setOpen] = useState(false)
   return (
     <div className="flex items-center border-b bg-background/80 p-4 backdrop-blur-md md:hidden sticky top-0 z-50">
@@ -20,7 +25,12 @@ export function MobileNavWrapper() {
         </SheetTrigger>
         <SheetContent side="left" className="pr-0 w-72">
           <SheetTitle className="sr-only">导航菜单</SheetTitle>
-          <SidebarWrapper className="pt-4 h-full" onNavClick={() => setOpen(false)} />
+          <Sidebar 
+            className="pt-4 h-full" 
+            onNavClick={() => setOpen(false)} 
+            folders={folders}
+            tags={tags}
+          />
         </SheetContent>
       </Sheet>
       <span className="text-lg font-bold tracking-tight">熙记</span>

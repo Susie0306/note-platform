@@ -84,7 +84,14 @@ export function Sidebar({ className, onNavClick, folders = [], tags = [] }: Side
           <div className="mb-2 flex items-center justify-between px-4">
             <h2 className="text-lg font-semibold tracking-tight">我的笔记</h2>
             {/* 这里放置 Clerk 的用户按钮 */}
-            <UserButton />
+            <UserButton 
+              appearance={{
+                elements: {
+                  userButtonPopoverCard: { pointerEvents: 'auto', zIndex: 100000 },
+                  userButtonPopoverFooter: { pointerEvents: 'auto', zIndex: 100000 },
+                }
+              }}
+            />
           </div>
 
           {/* "新建笔记" 按钮 - 核心功能 */}

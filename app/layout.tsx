@@ -4,7 +4,7 @@ import { zhCN } from '@clerk/localizations'
 import { ClerkProvider, SignedIn, SignedOut, SignInButton, SignUpButton } from '@clerk/nextjs'
 import { Sparkles, Sun } from 'lucide-react'
 
-import { SidebarWrapper } from '@/components/SidebarWrapper'
+import { Sidebar } from '@/components/Sidebar'
 import { GlobalBackground } from '@/components/GlobalBackground'
 
 import './globals.css'
@@ -14,6 +14,7 @@ import { SyncManager } from '@/components/SyncManager'
 import { ThemeColorProvider } from '@/components/theme-color-provider'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from '@/components/ui/sonner'
+import { getNavigationData } from '@/app/actions/navigation'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -30,11 +31,13 @@ export const metadata: Metadata = {
   description: '在线知识笔记平台，记录生活中的小希冀',
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const { folders, tags } = await getNavigationData()
+
   return (
     <ClerkProvider localization={zhCN}>
       <html lang="en" suppressHydrationWarning>
@@ -128,11 +131,11 @@ export default function RootLayout({
                 <GlobalBackground />
                 <div className="flex min-h-screen flex-col md:flex-row">
                   {/* 移动端顶部导航 (仅在手机显示) */}
-                  <MobileNavWrapper />
+                  <MobileNavWrapper folders={folders} tags={tags} />
 
                   {/* 桌面端侧边栏 (仅在桌面显示) */}
                   <aside className="bg-background/40 hidden h-screen w-64 shrink-0 border-r backdrop-blur-sm md:block sticky top-0 overflow-y-auto">
-                    <SidebarWrapper />
+                    <Sidebar folders={folders} tags={tags} />
                   </aside>
 
                   {/* 主内容区域 */}

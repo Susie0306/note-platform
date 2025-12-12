@@ -6,7 +6,6 @@ import { useStorage, useMutation, useRoom } from '@liveblocks/react'
 
 import { EditorKit } from '@/components/editor-kit'
 import { Editor, EditorContainer } from '@/components/ui/editor'
-import { SettingsDialog } from '@/components/settings-dialog'
 
 interface PlateEditorProps {
   initialMarkdown?: string
@@ -315,8 +314,6 @@ export function PlateEditor({
           className="min-h-[500px] px-8 py-8 sm:px-12"
         />
       </EditorContainer>
-      
-      <SettingsDialog />
     </Plate>
   )
 }
