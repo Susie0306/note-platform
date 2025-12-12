@@ -13,8 +13,12 @@ import {
   type NoteData,
   type NoteUpdatePayload,
 } from '@/lib/indexeddb'
-// ✅ 引用新的、优化后的编辑器组件
-import { PlateEditor } from '@/components/editor/plate-editor'
+import dynamic from 'next/dynamic'
+// ✅ 引用新的、优化后的编辑器组件 (Dynamic Import)
+const PlateEditor = dynamic(() => import('@/components/editor/plate-editor').then(mod => mod.PlateEditor), {
+  ssr: false,
+  loading: () => <div className="h-[500px] w-full animate-pulse bg-muted/20 rounded-md" />
+})
 import { ShareButton } from '@/components/ShareButton'
 import { TagInput } from '@/components/TagInput'
 import { FolderSelector } from '@/components/FolderSelector'

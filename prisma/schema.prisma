@@ -50,6 +50,8 @@ model Note {
   // 后续会在这里通过 SQL 扩展添加 embedding 字段。
 
   @@index([userId]) // 优化查询性能
+  @@index([folderId]) // 优化文件夹筛选
+  @@index([userId, deletedAt]) // 优化列表页默认查询
 }
 
 // 3. 标签模型
