@@ -2,18 +2,21 @@
 
 [English](./README_EN.md) | [简体中文](./README.md)
 
-**Xiji** is a modern note-taking application built on **Next.js 14 (App Router)**, designed to blend a seamless **Local-First** experience with powerful **Real-Time Collaboration**. It is not just a Markdown editor but also integrates AI-assisted writing, a wish tracking system, and unique "Memory Capsule" features.
+**Xiji** is a modern note platform centered on both emotional needs and practical utility. With the mission of **“protecting every small wish through notes”**, it builds a product ecosystem that balances functionality and warmth.
 
-This project highlights technical depth in **complex state management**, **real-time data synchronization**, **offline support**, and **rich text editor customization**.
+Xiji is not only a knowledge note tool, but also an emotional carrier that safeguards users’ life wishes. Through practical baseline features, emotionally designed special modules, and convenient cross‑device sync, every record becomes meaningful — every small wish can be seen, tracked, and achieved — aiming to become the **“witness of your beautiful moments.”**
+
+From a technical perspective, the project is built on **Next.js 14 (App Router)**, deeply integrating a smooth **Local‑First** experience with **Real‑Time Collaboration**, showcasing technical depth in complex state management, offline synchronization, and rich text customization.
 
 ## ✨ Key Features
 
 - **📝 Powerful Rich Text Editor**: Built on Plate.js (Slate), supporting Markdown syntax, Slash Commands, code block highlighting, and media embedding.
-- **🤝 Real-Time Collaborative Editing**: Multiple users editing the same document simultaneously, with real-time visible cursors and millisecond-level synchronization (Powered by Liveblocks & Yjs).
+- **🤝 Real-Time Collaborative Editing**: Multiple users editing the same document simultaneously, with synchronized updates of the latest document status (Powered by Liveblocks Storage API).
 - **⚡️ Local-First & Offline Support**: Uses IndexedDB for local storage, remaining usable offline, and automatically synchronizing data via a Sync Queue upon network recovery.
-- **🤖 AI Intelligent Assistance**: Adopts a hybrid AI architecture—utilizing Vercel AI SDK for Copilot-style auto-completion, combined with custom OpenAI/DeepSeek integration for advanced commands like polishing and summarization.
+- **🤖 AI Intelligent Assistance**: Combines custom DeepSeek integration for advanced commands like polishing and summarization.
 - **📂 Flexible Organization Structure**: Supports infinite nested folders and a many-to-many tag classification system.
-- **🌟 Wishes & Memories**: Unique product features supporting progress tracking for wish lists and time-based "Memory Capsules".
+- **🌟 Wishboard**: A dedicated wish‑tracking module with timeline notes. Set target milestones and deadlines (e.g., “Learn guitar in 3 months”), and visualize progress with built‑in templates (travel planning, study goals, etc.).
+- **💊 Memory Capsule**: A time‑capsule feature that delivers warm reminders when the set time arrives, helping you revisit past wishes and cherish growth over time.
 
 ## 🛠 Tech Stack
 
@@ -25,7 +28,7 @@ This project highlights technical depth in **complex state management**, **real-
 
 ### Editor & Collaboration
 - **Rich Text Engine**: Plate.js / Slate.js
-- **Real-Time Collaboration**: Liveblocks, Yjs (CRDTs Algorithms)
+- **Real-Time Collaboration**: Liveblocks (Storage API)
 - **State Management**: Zustand (Global), React Context (Local)
 
 ### Offline & Storage

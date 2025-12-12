@@ -237,7 +237,7 @@ function NoteEditorContent({
             placeholder="无标题笔记"
             className="placeholder:text-muted-foreground/50 h-auto w-full min-w-0 border-none px-0 text-3xl font-extrabold tracking-tight shadow-none focus-visible:ring-0 sm:text-4xl md:text-5xl"
           />
-          <div className="text-muted-foreground/80 flex flex-wrap items-center gap-3 text-sm">
+          <div className="text-muted-foreground/80 flex flex-shrink-0 items-center gap-2 text-sm">
             <div className="flex flex-col items-center justify-center gap-0.5">
               <div className="flex -space-x-2">
                 {collaboratorAvatars.slice(0, 4).map((member) => (
@@ -250,16 +250,17 @@ function NoteEditorContent({
                   </span>
                 ))}
               </div>
-              <span className="text-muted-foreground text-[10px] leading-none">
+              <span className="text-muted-foreground whitespace-nowrap text-[10px] leading-none">
                 {others.length + 1} 人在线
               </span>
             </div>
             <FolderSelector noteId={noteId} currentFolderId={folderId} onChange={setFolderId} />
             <ShareButton />
-            <div className="flex items-center gap-1 text-xs sm:text-sm">
+            <div className="hidden items-center gap-1 text-xs sm:flex sm:text-sm">
               {isSaving ? (
                 <span className="flex items-center gap-1 text-blue-600 dark:text-blue-400">
-                  <Cloud className="h-3 w-3 animate-pulse sm:h-4 sm:w-4" /> 保存中...
+                  <Cloud className="h-3 w-3 animate-pulse sm:h-4 sm:w-4" />
+                  <span className="hidden lg:inline">保存中...</span>
                 </span>
               ) : lastSaved ? (
                 <span className="text-muted-foreground flex items-center gap-1">
@@ -268,14 +269,17 @@ function NoteEditorContent({
                   ) : (
                     <Cloud className="h-3 w-3 text-green-600 sm:h-4 sm:w-4 dark:text-green-400" />
                   )}
-                  <span className="xs:inline hidden">
+                  <span className="xs:inline hidden whitespace-nowrap">
                     {saveLocation === 'local' ? '已存本地' : '已同步'}
                   </span>
-                  {lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  <span className="hidden xl:inline">
+                    {lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
                 </span>
               ) : (
                 <span className="text-muted-foreground flex items-center gap-1">
-                  <CloudOff className="h-3 w-3 sm:h-4 sm:w-4" /> 未保存
+                  <CloudOff className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden lg:inline">未保存</span>
                 </span>
               )}
             </div>
