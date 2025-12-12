@@ -2,60 +2,37 @@
 
 import { auth } from '@clerk/nextjs/server'
 import prisma from '@/lib/prisma'
-import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
+import { revalidatePath } from 'next/cache'
 
-// 使用缓存获取侧边栏数据
+// 获取侧边栏导航数据（文件夹和标签树）
 export async function getNavigationData() {
   const { userId } = await auth()
   if (!userId) return { folders: [], tags: [] }
 
-  // 1. 获取 DB User (这步很难缓存，因为依赖 userId，但 Prisma 有自己的 query cache)
   const dbUser = await prisma.user.findUnique({
     where: { clerkId: userId },
   })
 
   if (!dbUser) return { folders: [], tags: [] }
 
-  // 2. 缓存的获取函数
-  const getCachedData = unstable_cache(
-    async (userId: string) => {
-      const [folders, tags] = await Promise.all([
-        prisma.folder.findMany({
-          where: { userId },
-          orderBy: { createdAt: 'desc' },
-          include: {
-            _count: { select: { notes: true } }
-          }
-        }),
-        prisma.tag.findMany({
-          where: { userId },
-          orderBy: { name: 'asc' },
-          include: {
-            _count: { select: { notes: true } }
-          }
-        })
-      ])
-      return { folders, tags }
-    },
-    ['navigation-data'], // Cache Key Parts (static)
-    {
-      tags: [`nav-${dbUser.id}`], // Revalidation Tags (dynamic per user)
-      revalidate: 3600 // 1 hour fallback
-    }
-  )
+  const [folders, tags] = await Promise.all([
+    prisma.folder.findMany({
+      where: { userId: dbUser.id },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        _count: { select: { notes: true } }
+      }
+    }),
+    prisma.tag.findMany({
+      where: { userId: dbUser.id },
+      orderBy: { name: 'asc' },
+      include: {
+        _count: { select: { notes: true } }
+      }
+    })
+  ])
 
-  return await getCachedData(dbUser.id)
-}
-
-// Helper to revalidate user nav
-async function revalidateUserNav() {
-  const { userId } = await auth()
-  if (!userId) return
-  
-  const dbUser = await prisma.user.findUnique({ where: { clerkId: userId } })
-  if (dbUser) {
-    revalidateTag(`nav-${dbUser.id}`)
-  }
+  return { folders, tags }
 }
 
 // --- 文件夹操作 ---
@@ -75,7 +52,6 @@ export async function createFolder(name: string, parentId?: string) {
     },
   })
   
-  await revalidateUserNav()
   revalidatePath('/')
   revalidatePath('/notes')
 }
@@ -91,7 +67,6 @@ export async function deleteFolder(id: string) {
     where: { id },
   })
   
-  await revalidateUserNav()
   revalidatePath('/')
 }
 
@@ -119,7 +94,6 @@ export async function createTag(name: string, parentId?: string) {
     },
   })
   
-  await revalidateUserNav()
   revalidatePath('/')
   return tag
 }
@@ -127,8 +101,5 @@ export async function createTag(name: string, parentId?: string) {
 export async function deleteTag(id: string) {
    // 类似 deleteFolder
    await prisma.tag.delete({ where: { id }})
-   await revalidateUserNav()
    revalidatePath('/')
 }
-
-
