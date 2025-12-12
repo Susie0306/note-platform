@@ -40,7 +40,7 @@ import { ToggleKit } from '@/components/toggle-kit';
 export const EditorKit = [
   ...CopilotKit,
 
-  // Elements
+  // 元素
   ...BasicBlocksKit,
   ...CodeBlockKit,
   ...TableKit,
@@ -54,21 +54,21 @@ export const EditorKit = [
   ...LinkKit,
   ...MentionKit,
 
-  // Marks
+  // 标记
   ...BasicMarksKit,
   ...FontKit,
 
-  // Block Style
+  // 块样式
   ...ListKit,
   ...AlignKit,
   ...LineHeightKit,
 
-  // Collaboration
+  // 协作
   ...DiscussionKit,
   ...CommentKit,
   ...SuggestionKit,
 
-  // Editing
+  // 编辑
   ...SlashKit,
   ...AutoformatKit,
   ...CursorOverlayKit,
@@ -78,11 +78,11 @@ export const EditorKit = [
   ...ExitBreakKit,
   TrailingBlockPlugin,
 
-  // Parsers
+  // 解析器
   ...DocxKit,
   ...MarkdownKit,
 
-  // UI
+  // 用户界面
   ...BlockPlaceholderKit,
   ...FixedToolbarKit,
   ...FloatingToolbarKit,

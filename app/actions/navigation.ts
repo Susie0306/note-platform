@@ -1,8 +1,9 @@
 'use server'
 
-import { auth } from '@clerk/nextjs/server'
-import prisma from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
+import { auth } from '@clerk/nextjs/server'
+
+import prisma from '@/lib/prisma'
 
 // 获取侧边栏导航数据（文件夹和标签树）
 export async function getNavigationData() {
@@ -20,16 +21,16 @@ export async function getNavigationData() {
       where: { userId: dbUser.id },
       orderBy: { createdAt: 'desc' },
       include: {
-        _count: { select: { notes: true } }
-      }
+        _count: { select: { notes: true } },
+      },
     }),
     prisma.tag.findMany({
       where: { userId: dbUser.id },
       orderBy: { name: 'asc' },
       include: {
-        _count: { select: { notes: true } }
-      }
-    })
+        _count: { select: { notes: true } },
+      },
+    }),
   ])
 
   return { folders, tags }
@@ -51,7 +52,7 @@ export async function createFolder(name: string, parentId?: string) {
       userId: dbUser.id,
     },
   })
-  
+
   revalidatePath('/')
   revalidatePath('/notes')
 }
@@ -61,12 +62,11 @@ export async function deleteFolder(id: string) {
   if (!userId) throw new Error('Unauthorized')
 
   // 简单的权限校验：确保文件夹属于当前用户
-  // 实际生产中应先查询文件夹归属
-  
+
   await prisma.folder.delete({
     where: { id },
   })
-  
+
   revalidatePath('/')
 }
 
@@ -81,7 +81,7 @@ export async function createTag(name: string, parentId?: string) {
 
   // 检查是否存在同名标签
   const existing = await prisma.tag.findUnique({
-    where: { name_userId: { name, userId: dbUser.id } }
+    where: { name_userId: { name, userId: dbUser.id } },
   })
 
   if (existing) return existing
@@ -93,13 +93,14 @@ export async function createTag(name: string, parentId?: string) {
       userId: dbUser.id,
     },
   })
-  
+
   revalidatePath('/')
   return tag
 }
 
 export async function deleteTag(id: string) {
-   // 类似 deleteFolder
-   await prisma.tag.delete({ where: { id }})
-   revalidatePath('/')
+  // 类似 deleteFolder
+  await prisma.tag.delete({ where: { id } })
+  revalidatePath('/')
 }
+

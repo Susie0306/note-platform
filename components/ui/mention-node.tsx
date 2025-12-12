@@ -57,14 +57,14 @@ export function MentionElement(
       }}
     >
       {mounted && IS_APPLE ? (
-        // Mac OS IME https://github.com/ianstormtaylor/slate/issues/3490
+        // Mac OS 输入法 https://github.com/ianstormtaylor/slate/issues/3490
         <>
           {props.children}
           {props.prefix}
           {element.value}
         </>
       ) : (
-        // Others like Android https://github.com/ianstormtaylor/slate/pull/5360
+        // 其他如 Android https://github.com/ianstormtaylor/slate/pull/5360
         <>
           {props.prefix}
           {element.value}

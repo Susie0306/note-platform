@@ -6,16 +6,16 @@ import { useRouter } from 'next/navigation'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import { Trash2 } from 'lucide-react'
-
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+
+import { ConfirmDialog } from '@/components/ConfirmDialog'
+import { FolderSelector } from '@/components/FolderSelector'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
-import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { deleteNote } from '@/app/actions/notes'
-import { FolderSelector } from '@/components/FolderSelector'
 
 // 定义 Props 类型，这里直接对应 Prisma 返回的数据结构
 interface NoteCardProps {
@@ -33,12 +33,12 @@ interface NoteCardProps {
   onUpdate?: () => void
 }
 
-export function NoteCard({ 
-  note, 
+export function NoteCard({
+  note,
   isSelectionMode = false,
   isSelected = false,
   onSelectChange,
-  onUpdate
+  onUpdate,
 }: NoteCardProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -66,16 +66,16 @@ export function NoteCard({
 
   const handleCheckboxClick = (e: React.MouseEvent) => {
     e.stopPropagation()
-    // Checkbox internal logic handles the state change via onCheckedChange,
-    // but we need to stop propagation here to avoid Link navigation.
+    // 复选框内部逻辑通过 onCheckedChange 处理状态更改，
+    // 但我们需要在此处阻止传播以避免 Link 导航。
   }
 
   return (
-    <div className="relative group h-full">
-      {/* Checkbox for selection */}
+    <div className="group relative h-full">
+      {/* 用于选择的复选框 */}
       {isSelectionMode && (
         <div className="absolute top-2 right-2 z-20">
-          <Checkbox 
+          <Checkbox
             checked={isSelected}
             onCheckedChange={onSelectChange}
             onClick={handleCheckboxClick}
@@ -84,10 +84,14 @@ export function NoteCard({
         </div>
       )}
 
-      <Card className={`group relative flex h-full flex-col transition-shadow hover:shadow-md ${isSelected ? 'ring-2 ring-primary border-primary' : ''}`}>
-        <Link href={`/notes/${note.id}`} className="flex flex-1 flex-col cursor-pointer">
+      <Card
+        className={`group relative flex h-full flex-col transition-shadow hover:shadow-md ${isSelected ? 'ring-primary border-primary ring-2' : ''}`}
+      >
+        <Link href={`/notes/${note.id}`} className="flex flex-1 cursor-pointer flex-col">
           <CardHeader>
-            <CardTitle className="line-clamp-1 text-lg pr-6">{note.title || '无标题笔记'}</CardTitle>
+            <CardTitle className="line-clamp-1 pr-6 text-lg">
+              {note.title || '无标题笔记'}
+            </CardTitle>
           </CardHeader>
           <CardContent className="flex-1 space-y-3">
             {note.tags.length > 0 && (
@@ -107,20 +111,30 @@ export function NoteCard({
             {/* Markdown 预览区域 */}
             <div className="relative h-[4.5em] overflow-hidden text-sm text-gray-500">
               <div className="prose prose-sm dark:prose-invert pointer-events-none max-w-none [&>*:first-child]:mt-0">
-                <ReactMarkdown 
+                <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   components={{
                     // 禁用图片渲染或限制图片大小，避免破坏卡片布局
-                    img: ({node, ...props}) => <span className="text-xs text-muted-foreground">[图片]</span>,
+                    img: ({ node, ...props }) => (
+                      <span className="text-muted-foreground text-xs">[图片]</span>
+                    ),
                     // 简化标题显示，避免太大
-                    h1: ({node, ...props}) => <p className="font-bold text-base mb-1" {...props} />,
-                    h2: ({node, ...props}) => <p className="font-bold text-base mb-1" {...props} />,
-                    h3: ({node, ...props}) => <p className="font-bold text-base mb-1" {...props} />,
+                    h1: ({ node, ...props }) => (
+                      <p className="mb-1 text-base font-bold" {...props} />
+                    ),
+                    h2: ({ node, ...props }) => (
+                      <p className="mb-1 text-base font-bold" {...props} />
+                    ),
+                    h3: ({ node, ...props }) => (
+                      <p className="mb-1 text-base font-bold" {...props} />
+                    ),
                     // 确保列表紧凑
-                    ul: ({node, ...props}) => <ul className="my-0.5 pl-4 list-disc" {...props} />,
-                    ol: ({node, ...props}) => <ol className="my-0.5 pl-4 list-decimal" {...props} />,
-                    li: ({node, ...props}) => <li className="my-0" {...props} />,
-                    p: ({node, ...props}) => <p className="my-0.5 leading-snug" {...props} />,
+                    ul: ({ node, ...props }) => <ul className="my-0.5 list-disc pl-4" {...props} />,
+                    ol: ({ node, ...props }) => (
+                      <ol className="my-0.5 list-decimal pl-4" {...props} />
+                    ),
+                    li: ({ node, ...props }) => <li className="my-0" {...props} />,
+                    p: ({ node, ...props }) => <p className="my-0.5 leading-snug" {...props} />,
                   }}
                 >
                   {note.content || '暂无内容...'}
@@ -137,19 +151,20 @@ export function NoteCard({
                 locale: zhCN,
               })}
             </span>
-            <div onClick={(e) => {
-              // 这里的阻止冒泡可能不再严格需要，但保留也无妨，防止向上冒泡到 Card 可能存在的其他事件
-              e.stopPropagation()
-            }}>
-              <FolderSelector 
-                noteId={note.id} 
+            <div
+              onClick={(e) => {
+                e.stopPropagation()
+              }}
+            >
+              <FolderSelector
+                noteId={note.id}
                 currentFolderId={note.folderId}
                 onUpdate={onUpdate}
               />
             </div>
           </div>
 
-          {/* 删除按钮 - 只有鼠标悬停时才显示，或者一直显示也可 */}
+          {/* 删除按钮 */}
           {/* 在选择模式下隐藏单个删除按钮，以免混淆 */}
           {!isSelectionMode && (
             <Button

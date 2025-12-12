@@ -32,9 +32,9 @@ export function LogCreator({ wishId }: LogCreatorProps) {
     startTransition(async () => {
       try {
         await createWishLog(wishId, content)
-        // Reset state
+        // 重置状态
         setContent('')
-        // Reset editor content
+        // 重置编辑器内容
         editor.tf.setValue([{ type: 'p', children: [{ text: '' }] }])
         
         toast.success('记录成功')

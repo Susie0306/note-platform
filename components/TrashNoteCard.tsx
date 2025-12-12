@@ -52,7 +52,7 @@ export function TrashNoteCard({
   }
 
   const handleCheckboxClick = (e: React.MouseEvent) => {
-    // e.stopPropagation() // Not strictly needed here as there's no surrounding Link, but good practice
+    // e.stopPropagation() // 这里严格来说不需要，因为周围没有 Link，但是个好习惯
   }
 
   return (

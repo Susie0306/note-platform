@@ -46,7 +46,7 @@ const value = normalizeNodeId([
     ],
     type: 'p',
   },
-  // Suggestions & Comments Section
+  // 建议和评论部分
   {
     children: [{ text: 'Collaborative Editing' }],
     type: 'h2',
@@ -144,7 +144,7 @@ const value = normalizeNodeId([
   //   },
   //   type: 'p',
   // },
-  // AI Section
+  // AI 部分
   {
     children: [{ text: 'AI-Powered Editing' }],
     type: 'h2',
@@ -181,7 +181,7 @@ const value = normalizeNodeId([
     listStyleType: 'disc',
     type: 'p',
   },
-  // Core Features Section (Combined)
+  // 核心功能部分（组合）
   {
     children: [{ text: 'Rich Content Editing' }],
     type: 'h2',
@@ -299,7 +299,7 @@ const value = normalizeNodeId([
     ],
     type: 'p',
   },
-  // Table Section
+  // 表格部分
   {
     children: [{ text: 'How Plate Compares' }],
     type: 'h3',
@@ -512,7 +512,7 @@ const value = normalizeNodeId([
     ],
     type: 'table',
   },
-  // Media Section
+  // 媒体部分
   {
     children: [{ text: 'Images and Media' }],
     type: 'h3',

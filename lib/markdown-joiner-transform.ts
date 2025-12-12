@@ -15,7 +15,7 @@ export const markdownJoinerTransform =
 
     return new TransformStream<TextStreamPart<TOOLS>, TextStreamPart<TOOLS>>({
       async flush(controller) {
-        // Only flush if we haven't seen text-end yet
+        // 仅当我们尚未看到 text-end 时才刷新
         if (!textStreamEnded) {
           const remaining = joiner.flush();
           if (remaining && lastTextDeltaId) {
@@ -39,7 +39,7 @@ export const markdownJoinerTransform =
             await delay(joiner.delayInMs);
           }
         } else if (chunk.type === 'text-end') {
-          // Flush any remaining buffer before text-end
+          // 在 text-end 之前刷新任何剩余缓冲区
           const remaining = joiner.flush();
           if (remaining && lastTextDeltaId) {
             controller.enqueue({
@@ -119,7 +119,7 @@ export class MarkdownJoiner {
   }
 
   private isFalsePositive(char: string): boolean {
-    // when link is not complete, even if ths buffer is more than 30 characters, it is not a false positive
+    // 当链接不完整时，即使缓冲区超过 30 个字符，也不是误报
     if (this.buffer.startsWith('[') && this.buffer.includes('http')) {
       return false;
     }
@@ -206,11 +206,11 @@ export class MarkdownJoiner {
           output += this.buffer;
           this.clearBuffer();
         } else if (this.isFalsePositive(char)) {
-          // False positive - flush buffer as raw text
+          // 误报 - 将缓冲区刷新为原始文本
           output += this.buffer;
           this.clearBuffer();
         }
-        // Check if we should start buffering
+        // 检查我们是否应该开始缓冲
       } else if (
         char === '*' ||
         char === '<' ||
@@ -222,7 +222,7 @@ export class MarkdownJoiner {
         this.buffer = char;
         this.isBuffering = true;
       } else {
-        // Pass through character directly
+        // 直接传递字符
         output += char;
       }
     }

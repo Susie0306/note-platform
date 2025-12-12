@@ -536,7 +536,7 @@ const emojiCategoryIcons: Record<
   EmojiCategoryList,
   {
     outline: React.ReactElement;
-    solid: React.ReactElement; // Needed to add another solid variant - outline will be used for now
+    solid: React.ReactElement; // 需要添加另一个实心变体 - 目前将使用轮廓
   }
 > = {
   activity: {

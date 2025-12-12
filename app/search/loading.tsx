@@ -9,9 +9,9 @@ export default function Loading() {
         <div className="h-4 w-20 animate-pulse rounded bg-gray-200" />
       </div>
 
-      {/* 网格布局，放置 6 个卡片骨架 */}
+      {/* 网格布局，放置 9 个卡片骨架 */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, i) => (
+        {Array.from({ length: 9 }).map((_, i) => (
           <NoteCardSkeleton key={i} />
         ))}
       </div>

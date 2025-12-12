@@ -31,11 +31,13 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
   // 构建动态查询条件
   // 只有当 queryText 或 queryTag 存在时才查询
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let notes: any[] = []
   const hasSearchCondition = queryText || queryTag
 
   if (hasSearchCondition) {
     // 构建 AND 条件数组
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const andConditions: any[] = []
 
     // 如果有文字搜索
@@ -118,14 +120,14 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
               {queryTag && (
                 <span>
                   {' '}
-                  标签为 "<b>{queryTag}</b>"{' '}
+                  标签为 &quot;<b>{queryTag}</b>&quot;{' '}
                 </span>
               )}
               {queryText && queryTag && <span> 且 </span>}
               {queryText && (
                 <span>
                   {' '}
-                  包含 "<b>{queryText}</b>"{' '}
+                  包含 &quot;<b>{queryText}</b>&quot;{' '}
                 </span>
               )}
               的笔记

@@ -1,8 +1,7 @@
-import type { CoreMessage } from 'ai';
-import type { SlateEditor } from 'platejs';
-
-import { getMarkdown } from '@platejs/ai';
-import dedent from 'dedent';
+import { getMarkdown } from '@platejs/ai'
+import type { CoreMessage } from 'ai'
+import dedent from 'dedent'
+import type { SlateEditor } from 'platejs'
 
 import {
   addSelection,
@@ -10,22 +9,22 @@ import {
   formatTextFromMessages,
   getMarkdownWithSelection,
   isMultiBlocks,
-} from './utils';
+} from './utils'
 
 export function getChooseToolPrompt({ messages }: { messages: CoreMessage[] }) {
   return buildStructuredPrompt({
     examples: [
-      // GENERATE
+      // 生成
       'User: "Write a paragraph about AI ethics" → Good: "generate" | Bad: "edit"',
       'User: "Create a short poem about spring" → Good: "generate" | Bad: "comment"',
 
-      // EDIT
+      // 编辑
       'User: "Please fix grammar." → Good: "edit" | Bad: "generate"',
       'User: "Improving writing style." → Good: "edit" | Bad: "generate"',
       'User: "Making it more concise." → Good: "edit" | Bad: "generate"',
       'User: "Translate this paragraph into French" → Good: "edit" | Bad: "generate"',
 
-      // COMMENT
+      // 评论
       'User: "Can you review this text and give me feedback?" → Good: "comment" | Bad: "edit"',
       'User: "Add inline comments to this code to explain what it does" → Good: "comment" | Bad: "generate"',
     ],
@@ -37,7 +36,7 @@ export function getChooseToolPrompt({ messages }: { messages: CoreMessage[] }) {
       - Return only one enum value with no explanation.
     `,
     task: `You are a strict classifier. Classify the user's last request as "generate", "edit", or "comment".`,
-  });
+  })
 }
 
 export function getCommentPrompt(
@@ -45,17 +44,17 @@ export function getCommentPrompt(
   {
     messages,
   }: {
-    messages: CoreMessage[];
+    messages: CoreMessage[]
   }
 ) {
   const selectingMarkdown = getMarkdown(editor, {
     type: 'blockWithBlockId',
-  });
+  })
 
   return buildStructuredPrompt({
     backgroundData: selectingMarkdown,
     examples: [
-      // 1) Basic single-block comment
+      // 基本的单块评论
       `User: Review this paragraph.
 
     backgroundData:
@@ -70,7 +69,7 @@ export function getCommentPrompt(
     }
   ]`,
 
-      // 2) Multiple comments within one long block
+      // 一个长块内的多个评论
       `User: Add comments for this section.
 
   backgroundData:
@@ -90,7 +89,7 @@ export function getCommentPrompt(
     }
   ]`,
 
-      // 3) Multi-block comment (span across two related paragraphs)
+      // 多块评论（跨越两个相关段落）
       `User: Provide comments.
 
   backgroundData:
@@ -106,7 +105,7 @@ export function getCommentPrompt(
     }
   ]`,
 
-      // 4) With <Selection> – user highlighted part of a sentence
+      // 带有 <Selection> – 用户高亮了句子的一部分
       `User: Give feedback on this highlighted phrase.
 
   backgroundData:
@@ -121,7 +120,7 @@ export function getCommentPrompt(
     }
   ]`,
 
-      // 5) With long <Selection> → multiple comments
+      // 带有长 <Selection> → 多个评论
       `User: Review the highlighted section.
 
   backgroundData:
@@ -169,44 +168,41 @@ export function getCommentPrompt(
         - content: the original document fragment that needs commenting.
         - comments: a brief comment or explanation for that fragment.
     `,
-  });
+  })
 }
 
-export function getGeneratePrompt(
-  editor: SlateEditor,
-  { messages }: { messages: CoreMessage[] }
-) {
+export function getGeneratePrompt(editor: SlateEditor, { messages }: { messages: CoreMessage[] }) {
   if (!isMultiBlocks(editor)) {
-    addSelection(editor);
+    addSelection(editor)
   }
 
-  const selectingMarkdown = getMarkdownWithSelection(editor);
+  const selectingMarkdown = getMarkdownWithSelection(editor)
 
   return buildStructuredPrompt({
     backgroundData: selectingMarkdown,
     examples: [
-      // 1) Summarize content
+      // 总结内容
       'User: Summarize the following text.\nBackground data:\nArtificial intelligence has transformed multiple industries, from healthcare to finance, improving efficiency and enabling data-driven decisions.\nOutput:\nAI improves efficiency and decision-making across many industries.',
 
-      // 2) Generate key takeaways
+      // 生成关键要点
       'User: List three key takeaways from this text.\nBackground data:\nRemote work increases flexibility but also requires better communication and time management.\nOutput:\n- Remote work enhances flexibility.\n- Communication becomes critical.\n- Time management determines success.',
 
-      // 3) Generate a title
+      // 生成标题
       'User: Generate a short, catchy title for this section.\nBackground data:\nThis section explains how machine learning models are trained using large datasets to recognize patterns.\nOutput:\nTraining Machines to Recognize Patterns',
 
-      // 4) Generate action items
+      // 生成行动项
       'User: Generate actionable next steps based on the paragraph.\nBackground data:\nThe report suggests improving documentation and conducting user interviews before the next release.\nOutput:\n- Update all technical documentation.\n- Schedule user interviews before the next release.',
 
-      // 5) Generate a comparison table
+      // 生成比较表
       'User: Generate a comparison table of the tools mentioned.\nBackground data:\nTool A: free, simple UI\nTool B: paid, advanced analytics\nOutput:\n| Tool  | Pricing | Features         |\n|-------|----------|-----------------|\n| A     | Free     | Simple UI        |\n| B     | Paid     | Advanced analytics |',
 
-      // 6) Generate a summary table of statistics
+      // 生成统计汇总表
       'User: Create a summary table of the following statistics.\nBackground data:\nSales Q1: 1200 units\nSales Q2: 1500 units\nSales Q3: 900 units\nOutput:\n| Quarter | Sales (units) |\n|----------|---------------|\n| Q1       | 1200          |\n| Q2       | 1500          |\n| Q3       | 900           |',
 
-      // 7) Generate a question list
+      // 生成问题列表
       'User: Generate three reflection questions based on the paragraph.\nBackground data:\nThe article discusses the role of creativity in problem-solving and how diverse perspectives enhance innovation.\nOutput:\n1. How can creativity be encouraged in structured environments?\n2. What role does diversity play in innovative teams?\n3. How can leaders balance creativity and efficiency?',
 
-      // 8) Explain a concept (selected phrase)
+      // 解释概念（选定短语）
       'User: Explain the meaning of the selected phrase.\nBackground data:\nDeep learning relies on neural networks to automatically extract patterns from data, a process called <Selection>feature learning</Selection>.\nOutput:\n"Feature learning" means automatically discovering useful representations or characteristics from raw data without manual intervention.',
     ],
     history: formatTextFromMessages(messages),
@@ -224,28 +220,27 @@ export function getGeneratePrompt(
       If the instruction requests creation or transformation (e.g., summarize, translate, rewrite, create a table), directly produce the final result using only the provided background data.
       Do not ask the user for additional content.
     `,
-  });
+  })
 }
 
 export function getEditPrompt(
   editor: SlateEditor,
   { isSelecting, messages }: { isSelecting: boolean; messages: CoreMessage[] }
 ) {
-  if (!isSelecting)
-    throw new Error('Edit tool is only available when selecting');
+  if (!isSelecting) throw new Error('Edit tool is only available when selecting')
   if (isMultiBlocks(editor)) {
-    const selectingMarkdown = getMarkdownWithSelection(editor);
+    const selectingMarkdown = getMarkdownWithSelection(editor)
 
     return buildStructuredPrompt({
       backgroundData: selectingMarkdown,
       examples: [
-        // 1) Fix grammar
+        // 修复语法
         'User: Fix grammar.\nbackgroundData: # User Guide\nThis guide explain how to install the app.\nOutput:\n# User Guide\nThis guide explains how to install the application.',
 
-        // 2) Make the tone more formal and professional
+        // 使语气更正式和专业
         "User: Make the tone more formal and professional.\nbackgroundData: ## Intro\nHey, here's how you can set things up quickly.\nOutput:\n## Introduction\nThis section describes the setup procedure in a clear and professional manner.",
 
-        // 3) Make it more concise without losing meaning
+        // 在不失去意义的情况下使其更简洁
         'User: Make it more concise without losing meaning.\nbackgroundData: The purpose of this document is to provide an overview that explains, in detail, all the steps required to complete the installation.\nOutput:\nThis document provides a detailed overview of the installation steps.',
       ],
       history: formatTextFromMessages(messages),
@@ -259,40 +254,40 @@ export function getEditPrompt(
       `,
       task: `The following <backgroundData> is user-provided Markdown content that needs improvement. Modify it according to the user's instruction.
       Unless explicitly stated otherwise, your output should be a seamless replacement of the original content.`,
-    });
+    })
   }
 
-  addSelection(editor);
+  addSelection(editor)
 
-  const selectingMarkdown = getMarkdownWithSelection(editor);
-  const endIndex = selectingMarkdown.indexOf('<Selection>');
-  const prefilledResponse = selectingMarkdown.slice(0, endIndex);
+  const selectingMarkdown = getMarkdownWithSelection(editor)
+  const endIndex = selectingMarkdown.indexOf('<Selection>')
+  const prefilledResponse = selectingMarkdown.slice(0, endIndex)
 
   return buildStructuredPrompt({
     backgroundData: selectingMarkdown,
     examples: [
-      // 1) Improve word choice
+      // 改进用词
       'User: Improve word choice.\nbackgroundData: This is a <Selection>nice</Selection> person.\nOutput: great',
 
-      // 2) Fix grammar
+      // 修复语法
       'User: Fix grammar.\nbackgroundData: He <Selection>go</Selection> to school every day.\nOutput: goes',
 
-      // 3) Make tone more polite
+      // 使语气更礼貌
       'User: Make tone more polite.\nbackgroundData: <Selection>Give me</Selection> the report.\nOutput: Please provide',
 
-      // 4) Make tone more confident
+      // 使语气更自信
       'User: Make tone more confident.\nbackgroundData: I <Selection>think</Selection> this might work.\nOutput: believe',
 
-      // 5) Simplify language
+      // 简化语言
       'User: Simplify the language.\nbackgroundData: The results were <Selection>exceedingly</Selection> positive.\nOutput: very',
 
-      // 6) Translate into French
+      // 翻译成法语
       'User: Translate into French.\nbackgroundData: <Selection>Hello</Selection>\nOutput: Bonjour',
 
-      // 7) Expand description
+      // 扩展描述
       'User: Expand the description.\nbackgroundData: The view was <Selection>beautiful</Selection>.\nOutput: breathtaking and full of vibrant colors',
 
-      // 8) Make it sound more natural
+      // 使其听起来更自然
       'User: Make it sound more natural.\nbackgroundData: She <Selection>did a party</Selection> yesterday.\nOutput: had a party',
     ],
     history: formatTextFromMessages(messages),
@@ -313,5 +308,5 @@ export function getEditPrompt(
       Your output should be a direct replacement for the selected text, without including any tags or surrounding content.
       Ensure the replacement is grammatically correct and fits naturally when substituted back into the original text.
     `,
-  });
+  })
 }

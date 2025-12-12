@@ -16,7 +16,7 @@ export function SyncManager() {
     setIsSyncing(true)
 
     try {
-      // 1. 获取所有待同步任务 (只读取，不删除)
+      // 获取所有待同步任务 (只读取，不删除)
       const tasks = await getAllSyncTasks()
 
       if (tasks.length === 0) {
@@ -29,7 +29,7 @@ export function SyncManager() {
 
       for (const task of tasks) {
         try {
-          // 2. 根据任务类型执行操作
+          // 根据任务类型执行操作
           if (task.type === 'UPDATE' && task.payload) {
             const { title, content, tags } = task.payload
             await updateNote(task.noteId, title, content, tags)
@@ -37,7 +37,7 @@ export function SyncManager() {
             await deleteNote(task.noteId)
           }
 
-          // 3. 只有同步成功了，才从 IndexedDB 移除该任务
+          // 只有同步成功了，才从 IndexedDB 移除该任务
           if (task.id) {
             await removeSyncTask(task.id)
             processedCount++

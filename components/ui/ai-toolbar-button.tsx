@@ -36,14 +36,14 @@ export function AIToolbarButton() {
   const [isFullContentMode, setIsFullContentMode] = useState(false);
 
   const handleAICommand = (command: string) => {
-    // Save current selection
+    // 保存当前选择
     savedSelectionRef.current = editor.selection;
 
-    // Get current content
+    // 获取当前内容
     let context = '';
     let isFull = false;
     
-    // Try to get selection first
+    // 首先尝试获取选择
     if (editor.selection) {
        // @ts-ignore: Dynamic access to editor.api
        const fragment = editor.api.string(editor.selection);
@@ -52,17 +52,17 @@ export function AIToolbarButton() {
        }
     } 
     
-    // Fallback to full content if no selection
+    // 如果没有选择，则回退到全部内容
     if (!context) {
-        // Safe access to markdown API
+        // 安全访问 Markdown API
         try {
-          // PlateJS editor instance structure can vary, check if markdown plugin is available
+          // PlateJS 编辑器实例结构可能有所不同，检查 Markdown 插件是否可用
           // @ts-ignore: Dynamic access to editor.api.markdown
           if (editor.api && editor.api.markdown && typeof editor.api.markdown.serialize === 'function') {
             // @ts-ignore: Dynamic access to editor.api.markdown
             context = editor.api.markdown.serialize();
           } else {
-             // Fallback: try to just get text content
+             // 回退：尝试仅获取文本内容
              context = (editor.children || []).map((n: any) => n.text || '').join('\n');
           }
         } catch (e) {
@@ -95,11 +95,11 @@ export function AIToolbarButton() {
   };
 
   const handleApply = (mode: 'replace' | 'insert') => {
-    // Restore focus to editor first
+    // 首先恢复编辑器焦点
     // @ts-ignore: Dynamic call
     editor.tf.focus();
     
-    // Parse markdown content to nodes
+    // 解析 Markdown 内容为节点
     let nodes: any = null;
     try {
       // @ts-ignore: Dynamic access to editor.api.markdown
@@ -113,13 +113,13 @@ export function AIToolbarButton() {
 
     if (mode === 'replace') {
       if (isFullContentMode) {
-          // Select all content if we were operating on full content
+          // 如果我们是在全内容上操作，则全选内容
           // @ts-ignore: Dynamic call
           editor.tf.select([]); 
-          // Note: In some versions of Plate/Slate select([]) selects empty range at start.
-          // If that fails, we might need a more robust way to select all, but let's try standard approach first.
-          // Alternatively, we can just replace children if it's full replacement, but insertText is safer for history.
-          // Let's manually construct a range for the whole document to be safe.
+          // 注意：在某些版本的 Plate/Slate 中，select([]) 会选择开头的空范围。
+          // 如果失败，我们可能需要更健壮的方法来全选，但先尝试标准方法。
+          // 或者，如果是完全替换，我们可以直接替换 children，但 insertText 对历史记录更安全。
+          // 为了安全起见，让我们手动构建整个文档的范围。
           if (editor.children.length > 0) {
              try {
                 // @ts-ignore
@@ -129,13 +129,13 @@ export function AIToolbarButton() {
                 // @ts-ignore
                 editor.tf.select({ anchor: start, focus: end });
              } catch (e) {
-                // Fallback
+                // 回退
                 // @ts-ignore
                 editor.tf.select([]);
              }
           }
       } else if (savedSelectionRef.current) {
-          // Restore original selection
+          // 恢复原始选择
           // @ts-ignore: Dynamic call
           editor.tf.select(savedSelectionRef.current);
       }
@@ -150,14 +150,14 @@ export function AIToolbarButton() {
     } else {
       // 移动光标到末尾并插入
       if (savedSelectionRef.current) {
-          // Restore selection first so we have a reference point
+          // 首先恢复选择，以便我们有一个参考点
            // @ts-ignore: Dynamic call
            editor.tf.select(savedSelectionRef.current);
-           // Collapse to end of selection
+           // 折叠到选择末尾
            // @ts-ignore: Dynamic call
            editor.tf.collapse({ edge: 'end' });
       } else {
-           // If no previous selection, just go to end of document
+           // 如果没有先前的选择，只需转到文档末尾
            // @ts-ignore: Dynamic call
            editor.tf.select([]);
            // @ts-ignore: Dynamic call

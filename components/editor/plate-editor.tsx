@@ -1,8 +1,8 @@
 'use client'
 
 import React, { useEffect, useMemo, useRef } from 'react'
+import { useMutation, useRoom, useStorage } from '@liveblocks/react'
 import { Plate, usePlateEditor } from 'platejs/react'
-import { useStorage, useMutation, useRoom } from '@liveblocks/react'
 
 import { EditorKit } from '@/components/editor-kit'
 import { Editor, EditorContainer } from '@/components/ui/editor'
@@ -24,80 +24,102 @@ export function PlateEditor({
 }: PlateEditorProps) {
   const initialMarkdownValue = initialMarkdown ?? ''
   const isCollaborative = Boolean(roomId)
-  
-  // Use Liveblocks Storage instead of Yjs
-  const content = useStorage((root) => {
+
+  // 使用 Liveblocks Storage 代替 Yjs
+  const content = useStorage((root: any) => {
     if (!roomId || !root) {
       return null
     }
     try {
-      // In Liveblocks, root is a LiveObject, use get method
-      // But if get doesn't exist, try direct property access
+      // 在 Liveblocks 中，root 是 LiveObject，使用 get 方法
+      // 但是如果 get 不存在，尝试直接属性访问
       let contentValue: any = null
-      if (typeof (root as any).get === 'function') {
-        contentValue = (root as any).get('content')
+      if (typeof root.get === 'function') {
+        contentValue = root.get('content')
       } else if ('content' in root) {
-        contentValue = (root as any).content
+        contentValue = root.content
       } else {
-        // Try toObject() if available
-        const obj = typeof (root as any).toObject === 'function' ? (root as any).toObject() : root
+        // 如果可用，尝试 toObject()
+        const obj = typeof root.toObject === 'function' ? root.toObject() : root
         contentValue = obj?.content
       }
-      
+
       const result = typeof contentValue === 'string' ? contentValue : null
       return result
     } catch (error) {
-      console.warn('Storage read error:', error, 'root type:', typeof root, 'root keys:', root ? Object.keys(root) : 'null')
+      console.warn(
+        'Storage read error:',
+        error,
+        'root type:',
+        typeof root,
+        'root keys:',
+        root ? Object.keys(root) : 'null'
+      )
       return null
     }
   })
-  const updateContent = useMutation(({ storage }, newContent: string) => {
-    if (roomId && storage) {
-      try {
-        // In Liveblocks, storage itself is the root LiveObject
-        // Use set method to update - this should be immediate
-        if (typeof (storage as any).set === 'function') {
-          (storage as any).set('content', newContent)
-          // Force immediate sync by accessing the value
-          // This ensures the update is propagated immediately
+  const updateContent = useMutation(
+    ({ storage }, newContent: string) => {
+      if (roomId && storage) {
+        try {
+          // 在 Liveblocks 中，storage 本身是根 LiveObject
+          // 使用 set 方法更新 - 这应该是立即的
+          const rootStorage = storage as any
+          if (typeof rootStorage.set === 'function') {
+            rootStorage.set('content', newContent)
+            // 通过访问值强制立即同步
+            // 这确保更新立即传播
+          }
+        } catch (error) {
+          // 静默失败 - 身份验证可能尚未准备就绪
+          // 这是初始加载期间预期的
         }
-      } catch (error) {
-        // Silently fail - authentication might not be ready yet
-        // This is expected during initial load
       }
-    }
-  }, [roomId])
-  
-  // Check if storage is ready
+    },
+    [roomId]
+  )
+
+  // 检查存储是否准备就绪
   const storageReady = useStorage((root) => root !== null)
 
   const editor = usePlateEditor({
     plugins: EditorKit,
-    value: (e: any) => {
-      // Use content from Liveblocks Storage if collaborative, otherwise use initialMarkdown
-      const source = isCollaborative && content ? content : initialMarkdownValue
-      const parsed = e.api.markdown.deserialize(source)
-      return parsed && parsed.length ? parsed : [{ type: 'p', children: [{ text: '' }] }]
-    },
   })
 
-  // Track what we've synced to avoid loops
+  // 初始化编辑器内容
+  const initialized = useRef(false)
+  if (!initialized.current) {
+    const source = isCollaborative && content ? content : initialMarkdownValue
+    const e = editor as any
+    if (e.api?.markdown) {
+      const parsed = e.api.markdown.deserialize(source)
+      if (parsed && parsed.length) {
+        editor.children = parsed
+        if (e.normalize) {
+          e.normalize({ force: true })
+        }
+      }
+    }
+    initialized.current = true
+  }
+
+  // 跟踪我们已同步的内容以避免循环
   const lastSyncedToStorageRef = useRef<string>('')
   const lastSyncedFromStorageRef = useRef<string>('')
   const isApplyingRemoteChangeRef = useRef(false)
   const lastUserInputTimeRef = useRef<number>(0)
   const editorHasFocusRef = useRef(false)
 
-  // Sync editor changes to Liveblocks Storage (when user types)
+  // 将编辑器更改同步到 Liveblocks Storage（当用户输入时）
   const handleEditorChange = () => {
     if (!isCollaborative || !editor || !storageReady || isApplyingRemoteChangeRef.current) return
 
-    // Mark that user just input (this is the only place we update this for real user input)
+    // 标记用户刚刚输入（这是我们为真实用户输入更新此内容的唯一地方）
     lastUserInputTimeRef.current = Date.now()
     editorHasFocusRef.current = true
 
     const md = editor.api.markdown.serialize()
-    // Only sync if content actually changed and we haven't just synced this
+    // 仅当内容实际更改且我们尚未同步此时才同步
     if (md !== lastSyncedToStorageRef.current) {
       lastSyncedToStorageRef.current = md
       try {
@@ -108,151 +130,162 @@ export function PlateEditor({
     }
   }
 
-  // Use immediate sync with minimal throttle to reduce delay
+  // 使用最小节流的立即同步以减少延迟
   const lastSyncTimeRef = useRef<number>(0)
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const THROTTLE_MS = 20 // Very short throttle (20ms = ~50 updates per second)
-  
+  const THROTTLE_MS = 20 // 非常短的节流（20ms = ~50 次更新/秒）
+
   const debouncedHandleChange = () => {
     const now = Date.now()
     const timeSinceLastSync = now - lastSyncTimeRef.current
-    
-    // Clear any pending sync
+
+    // 清除任何挂起的同步
     if (syncTimeoutRef.current) {
       clearTimeout(syncTimeoutRef.current)
       syncTimeoutRef.current = null
     }
-    
+
     if (timeSinceLastSync >= THROTTLE_MS) {
-      // Enough time has passed, sync immediately
+      // 已经过了足够的时间，立即同步
       lastSyncTimeRef.current = now
       handleEditorChange()
     } else {
-      // Schedule sync for the remaining time (but use requestAnimationFrame for smoother updates)
+      // 为剩余时间安排同步（但使用 requestAnimationFrame 以获得更平滑的更新）
       const remainingTime = THROTTLE_MS - timeSinceLastSync
-      // Use requestAnimationFrame to sync as soon as possible in the next frame
+      // 使用 requestAnimationFrame 在下一帧尽快同步
       requestAnimationFrame(() => {
-        syncTimeoutRef.current = setTimeout(() => {
-          lastSyncTimeRef.current = Date.now()
-          handleEditorChange()
-          syncTimeoutRef.current = null
-        }, Math.max(0, remainingTime - 5)) // Reduce by 5ms to account for frame time
+        syncTimeoutRef.current = setTimeout(
+          () => {
+            lastSyncTimeRef.current = Date.now()
+            handleEditorChange()
+            syncTimeoutRef.current = null
+          },
+          Math.max(0, remainingTime - 5)
+        ) // 减少 5ms 以考虑帧时间
       })
     }
   }
 
-  // Function to apply content from storage to editor
-  const applyContentToEditor = React.useCallback((newContent: string) => {
-    if (!editor || !newContent || typeof newContent !== 'string') return false
-    if (isApplyingRemoteChangeRef.current) return false
+  // 将内容从存储应用到编辑器的函数
+  const applyContentToEditor = React.useCallback(
+    (newContent: string) => {
+      if (!editor || !newContent || typeof newContent !== 'string') return false
+      if (isApplyingRemoteChangeRef.current) return false
 
-    const currentMd = editor.api.markdown.serialize()
-    
-    // Only update if content from storage is different
-    if (newContent !== currentMd) {
-      // Only skip if this is exactly what we just sent (to prevent loop)
-      if (newContent === lastSyncedToStorageRef.current) {
-        // This is our own update, ignore it
-        return false
-      }
-      
-      // Only block updates if user JUST input (within 300ms) AND editor has focus
-      // This is a very short window to prevent interruption during active typing
-      const timeSinceLastInput = Date.now() - lastUserInputTimeRef.current
-      if (lastUserInputTimeRef.current > 0 && editorHasFocusRef.current && timeSinceLastInput < 300) {
-        return false
-      }
-      
-      // Set flag BEFORE parsing to prevent onValueChange from updating lastUserInputTimeRef
-      isApplyingRemoteChangeRef.current = true
-      const parsed = editor.api.markdown.deserialize(newContent)
-      if (parsed && parsed.length > 0) {
-        try {
-          // Save current selection before update
-          let savedSelection: any = null
+      const currentMd = editor.api.markdown.serialize()
+
+      // 仅当存储中的内容不同时更新
+      if (newContent !== currentMd) {
+        // 仅当我们刚刚发送的内容完全相同时跳过（以防止循环）
+        if (newContent === lastSyncedToStorageRef.current) {
+          // 这是我们自己的更新，忽略它
+          return false
+        }
+
+        // 仅当用户刚刚输入（300ms 内）且编辑器具有焦点时阻止更新
+        // 这是一个非常短的窗口，以防止在活动输入期间中断
+        const timeSinceLastInput = Date.now() - lastUserInputTimeRef.current
+        if (
+          lastUserInputTimeRef.current > 0 &&
+          editorHasFocusRef.current &&
+          timeSinceLastInput < 300
+        ) {
+          return false
+        }
+
+        // 在解析之前设置标志，以防止 onValueChange 更新 lastUserInputTimeRef
+        isApplyingRemoteChangeRef.current = true
+        const parsed = editor.api.markdown.deserialize(newContent)
+        if (parsed && parsed.length > 0) {
           try {
-            if ((editor as any).selection && (editor as any).selection.anchor) {
-              savedSelection = {
-                anchor: { ...(editor as any).selection.anchor },
-                focus: { ...(editor as any).selection.focus }
+            // 更新前保存当前选择
+            let savedSelection: any = null
+            try {
+              if (editor.selection && editor.selection.anchor) {
+                savedSelection = {
+                  anchor: { ...editor.selection.anchor },
+                  focus: { ...editor.selection.focus },
+                }
               }
+            } catch (e) {
+              // 选择保存失败，继续而不保存
             }
-          } catch (e) {
-            // Selection save failed, continue without it
-          }
 
-          // Use a simpler, safer update method to avoid performance issues
-          // Direct assignment is simpler and less likely to cause issues
-          editor.children = parsed
-          // Trigger normalization if available
-          if ((editor as any).normalize) {
-            (editor as any).normalize({ force: true })
+            // 使用更简单、更安全的更新方法以避免性能问题
+            // 直接赋值更简单，不太可能引起问题
+            editor.children = parsed
+            // 如果可用，触发规范化
+            const e = editor as any
+            if (e.normalize) {
+              e.normalize({ force: true })
+            }
+
+            lastSyncedFromStorageRef.current = newContent
+            // 如果我们正在应用远程内容，清除我们发送的引用
+            if (newContent.length > lastSyncedToStorageRef.current.length) {
+              lastSyncedToStorageRef.current = ''
+            }
+
+            // 更新后重置标志（同步以避免计时问题）
+            isApplyingRemoteChangeRef.current = false
+
+            return true
+          } catch (error) {
+            console.error('[Apply] Failed to parse or prepare update:', error)
+            isApplyingRemoteChangeRef.current = false
+            return false
           }
-          
-          lastSyncedFromStorageRef.current = newContent
-          // Clear our sent ref if we're applying remote content
-          if (newContent.length > lastSyncedToStorageRef.current.length) {
-            lastSyncedToStorageRef.current = ''
-          }
-          
-          // Reset flag after update (synchronously to avoid timing issues)
-          isApplyingRemoteChangeRef.current = false
-          
-          return true
-        } catch (error) {
-          console.error('[Apply] Failed to parse or prepare update:', error)
+        } else {
           isApplyingRemoteChangeRef.current = false
           return false
         }
-      } else {
-        isApplyingRemoteChangeRef.current = false
-        return false
       }
-    }
-    return false
-  }, [editor])
+      return false
+    },
+    [editor]
+  )
 
-  // Sync Liveblocks Storage changes to editor (when other users type)
+  // 将 Liveblocks Storage 更改同步到编辑器（当其他用户输入时）
   useEffect(() => {
     if (!isCollaborative || !content || !editor || typeof content !== 'string') return
 
     applyContentToEditor(content)
   }, [content, editor, isCollaborative, applyContentToEditor])
 
-  // Polling mechanism: Periodically check and apply content updates
-  // This ensures updates are applied even if the editor is not focused or useStorage didn't trigger
-  // Store content in a ref so we can access it in the polling interval
+  // 轮询机制：定期检查并应用内容更新
+  // 这确保即使编辑器没有焦点或 useStorage 没有触发，也会应用更新
+  // 将内容存储在引用中，以便我们可以在轮询间隔中访问它
   const contentRef = useRef<string | null>(null)
-  
-  // Update ref whenever content changes (this should always work, even if editor is inactive)
+
+  // 每当内容更改时更新引用（这应该始终有效，即使编辑器处于非活动状态）
   useEffect(() => {
     if (content && typeof content === 'string') {
       contentRef.current = content
     }
   }, [content])
-  
+
   useEffect(() => {
     if (!isCollaborative || !storageReady || !editor) return
 
     const pollInterval = setInterval(() => {
       if (!editor || isApplyingRemoteChangeRef.current) return
-      
-      // Get latest content from ref (which is updated by useStorage)
+
+      // 从引用获取最新内容（由 useStorage 更新）
       const latestContent = contentRef.current
-      
+
       if (latestContent && typeof latestContent === 'string') {
-        // Apply the content update (applyContentToEditor will handle the protection logic)
+        // 应用内容更新（applyContentToEditor 将处理保护逻辑）
         const currentMd = editor.api.markdown.serialize()
         if (latestContent !== currentMd && latestContent !== lastSyncedToStorageRef.current) {
           applyContentToEditor(latestContent)
         }
       }
-    }, 100) // Check every 100ms for responsive updates
+    }, 100) // 每 100ms 检查一次以获得响应式更新
 
     return () => clearInterval(pollInterval)
   }, [isCollaborative, storageReady, editor, applyContentToEditor])
 
-  // Track editor focus state
+  // 跟踪编辑器焦点状态
   useEffect(() => {
     if (!editor) return
 
@@ -263,8 +296,9 @@ export function PlateEditor({
       editorHasFocusRef.current = false
     }
 
-    // Listen to editor focus/blur events
-    const editorElement = (editor as any).element
+    // 监听编辑器焦点/模糊事件
+    const e = editor as any
+    const editorElement = e.element
     if (editorElement) {
       editorElement.addEventListener('focus', handleFocus, true)
       editorElement.addEventListener('blur', handleBlur, true)
@@ -279,22 +313,22 @@ export function PlateEditor({
     <Plate
       editor={editor}
       onValueChange={() => {
-        // Skip if we're applying a remote change to prevent loops
+        // 如果我们正在应用远程更改，则跳过以防止循环
         if (isApplyingRemoteChangeRef.current) return
-        
+
         const md = editor.api.markdown.serialize()
-        
-        // Only update lastUserInputTimeRef if this is a real user input
-        // (content is different from what we last synced to storage)
-        // If content matches lastSyncedToStorageRef, it's likely a remote update being applied
+
+        // 仅当这是真实用户输入时更新 lastUserInputTimeRef
+        // （内容与我们上次同步到存储的内容不同）
+        // 如果内容与 lastSyncedToStorageRef 匹配，则很可能正在应用远程更新
         if (isCollaborative && md !== lastSyncedToStorageRef.current) {
-          // This is a real user input, mark it
+          // 这是真实用户输入，标记它
           lastUserInputTimeRef.current = Date.now()
           editorHasFocusRef.current = true
         }
-        
+
         onChange?.(md)
-        // Trigger sync to Liveblocks Storage
+        // 触发同步到 Liveblocks Storage
         if (isCollaborative) {
           debouncedHandleChange()
         }
@@ -302,8 +336,8 @@ export function PlateEditor({
     >
       <EditorContainer>
         {isCollaborative && !storageReady && (
-          <div className="absolute top-0 left-0 right-0 z-10 flex justify-center p-2 pointer-events-none">
-            <span className="text-[10px] text-muted-foreground bg-background/80 px-2 py-0.5 rounded border shadow-sm">
+          <div className="pointer-events-none absolute top-0 right-0 left-0 z-10 flex justify-center p-2">
+            <span className="text-muted-foreground bg-background/80 rounded border px-2 py-0.5 text-[10px] shadow-sm">
               Connecting...
             </span>
           </div>

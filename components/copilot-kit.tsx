@@ -30,7 +30,7 @@ export const CopilotKit = [
   - If no context is provided or you can't generate a continuation, return "0" without explanation.`,
         },
         onError: () => {
-          // Mock the API response. Remove it when you implement the route /api/ai/copilot
+          // 模拟 API 响应。当您实现路由 /api/ai/copilot 时将其删除
           api.copilot.setBlockSuggestion({
             text: stripMarkdown(faker.lorem.sentence()),
           });

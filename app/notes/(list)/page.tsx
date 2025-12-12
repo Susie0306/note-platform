@@ -45,16 +45,25 @@ export default async function NotesPage({ searchParams }: NotesPageProps) {
     const tag = await prisma.tag.findUnique({ where: { id: tagId } })
     if (tag) pageTitle = `标签：${tag.name}`
   }
-  
+
   // 处理排序参数
   const sort = params.sort || 'updatedAt_desc'
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let orderBy: any = { updatedAt: 'desc' }
   switch (sort) {
-    case 'createdAt_desc': orderBy = { createdAt: 'desc' }; break;
-    case 'createdAt_asc': orderBy = { createdAt: 'asc' }; break;
-    case 'updatedAt_asc': orderBy = { updatedAt: 'asc' }; break;
-    case 'updatedAt_desc': 
-    default: orderBy = { updatedAt: 'desc' }; break;
+    case 'createdAt_desc':
+      orderBy = { createdAt: 'desc' }
+      break
+    case 'createdAt_asc':
+      orderBy = { createdAt: 'asc' }
+      break
+    case 'updatedAt_asc':
+      orderBy = { updatedAt: 'asc' }
+      break
+    case 'updatedAt_desc':
+    default:
+      orderBy = { updatedAt: 'desc' }
+      break
   }
 
   // 并行查询：获取数据列表 + 总条数 (用于计算总页数)
@@ -63,21 +72,22 @@ export default async function NotesPage({ searchParams }: NotesPageProps) {
   let totalCount = 0
 
   if (dbUser) {
-    const where: any = { 
-        userId: dbUser.id, 
-        deletedAt: null 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const where: any = {
+      userId: dbUser.id,
+      deletedAt: null,
     }
-    
+
     if (folderId) {
-        where.folderId = folderId
+      where.folderId = folderId
     }
-    
+
     if (tagId) {
-        where.tags = {
-            some: {
-                id: tagId
-            }
-        }
+      where.tags = {
+        some: {
+          id: tagId,
+        },
+      }
     }
 
     const [data, count] = await Promise.all([

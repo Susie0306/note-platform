@@ -31,11 +31,11 @@ export const inlineTag = (tag: string, content?: string | null) => {
   return [`<${tag}>`, content, `</${tag}>`].join('');
 };
 
-// Sections split by double newlines
+// 章节由双换行符分隔
 export const sections = (sections: (boolean | string | null | undefined)[]) =>
   sections.filter(Boolean).join('\n\n');
 
-// List items split by newlines
+// 列表项由换行符分隔
 export const list = (items: string[] | undefined) =>
   items
     ? items
@@ -142,11 +142,11 @@ export const buildStructuredPrompt = ({
   return sections([
     tag('context', context),
     task,
-    // or <reasoningSteps>
+    // 或 <reasoningSteps>
     thinking && tag('thinking', thinking),
-    // Not needed with structured output
+    // 结构化输出不需要
     outputFormatting && tag('outputFormatting', outputFormatting),
-    // Not needed with structured output
+    // 结构化输出不需要
     (prefilledResponse ?? null) !== null &&
       tag('prefilledResponse', prefilledResponse ?? ''),
   ]);
@@ -220,7 +220,7 @@ const removeEscapeSelection = (editor: SlateEditor, text: string) => {
     .replace(`\\${SELECTION_START}`, SELECTION_START)
     .replace(`\\${SELECTION_END}`, SELECTION_END);
 
-  // If the selection is on a void element, inserting the placeholder will fail, and the string must be replaced manually.
+  // 如果选择位于 void 元素上，插入占位符将失败，必须手动替换字符串。
   if (!newText.includes(SELECTION_END)) {
     const [_, end] = RangeApi.edges(editor.selection!);
 

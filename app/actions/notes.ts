@@ -66,9 +66,9 @@ export async function updateNote(
 
   // 更新数据库
   await prisma.note.update({
-    where: { 
+    where: {
       id: noteId,
-      userId: dbUser.id // 🔒 安全修复：确保只能更新自己的笔记
+      userId: dbUser.id,
     },
     data: {
       title,
@@ -112,7 +112,7 @@ export async function updateNoteFolder(noteId: string, folderId: string | null) 
   // 验证文件夹（如果存在）属于用户
   if (folderId) {
     const folder = await prisma.folder.findUnique({
-      where: { id: folderId }
+      where: { id: folderId },
     })
     if (!folder || folder.userId !== dbUser.id) {
       throw new Error('Invalid folder')
@@ -121,7 +121,7 @@ export async function updateNoteFolder(noteId: string, folderId: string | null) 
 
   await prisma.note.update({
     where: { id: noteId, userId: dbUser.id },
-    data: { folderId }
+    data: { folderId },
   })
 
   revalidatePath('/notes')
@@ -136,9 +136,9 @@ export async function deleteNote(noteId: string) {
   if (!dbUser) throw new Error('User not found')
 
   await prisma.note.update({
-    where: { 
+    where: {
       id: noteId,
-      userId: dbUser.id // 🔒 安全修复
+      userId: dbUser.id,
     },
     data: { deletedAt: new Date() }, // 打上删除标记
   })
@@ -156,9 +156,9 @@ export async function restoreNote(noteId: string) {
   if (!dbUser) throw new Error('User not found')
 
   await prisma.note.update({
-    where: { 
+    where: {
       id: noteId,
-      userId: dbUser.id // 🔒 安全修复
+      userId: dbUser.id,
     },
     data: { deletedAt: null }, // 清除删除标记
   })
@@ -176,9 +176,9 @@ export async function deleteNotePermanently(noteId: string) {
   if (!dbUser) throw new Error('User not found')
 
   await prisma.note.delete({
-    where: { 
+    where: {
       id: noteId,
-      userId: dbUser.id // 🔒 安全修复
+      userId: dbUser.id,
     },
   })
 
@@ -189,12 +189,7 @@ export async function deleteNotePermanently(noteId: string) {
 export async function bulkDeleteNotes(noteIds: string[]) {
   const { userId } = await auth()
   if (!userId) throw new Error('Unauthorized')
-  
-  // Need to get dbUser id to ensure ownership if we want to be strict, 
-  // but updateMany with where clause on user relation is not directly supported on Note unless we query user first or join.
-  // Actually, Note has userId field which is our internal ID.
-  // We have clerkId.
-  // Let's get the internal user ID first.
+
   const dbUser = await prisma.user.findUnique({
     where: { clerkId: userId },
   })
@@ -203,7 +198,7 @@ export async function bulkDeleteNotes(noteIds: string[]) {
   await prisma.note.updateMany({
     where: {
       id: { in: noteIds },
-      userId: dbUser.id
+      userId: dbUser.id,
     },
     data: { deletedAt: new Date() },
   })
@@ -225,7 +220,7 @@ export async function bulkRestoreNotes(noteIds: string[]) {
   await prisma.note.updateMany({
     where: {
       id: { in: noteIds },
-      userId: dbUser.id
+      userId: dbUser.id,
     },
     data: { deletedAt: null },
   })
@@ -247,7 +242,7 @@ export async function bulkDeleteNotesPermanently(noteIds: string[]) {
   await prisma.note.deleteMany({
     where: {
       id: { in: noteIds },
-      userId: dbUser.id
+      userId: dbUser.id,
     },
   })
 

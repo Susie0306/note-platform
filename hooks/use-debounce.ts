@@ -8,7 +8,7 @@ export const useDebounce = <T>(value: T, delay = 500) => {
       setDebouncedValue(value);
     }, delay);
 
-    // Cancel the timeout if value changes (also on delay change or unmount)
+    // 如果值发生变化（或延迟变化、卸载），取消超时
     return () => {
       clearTimeout(handler);
     };

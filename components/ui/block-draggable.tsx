@@ -99,7 +99,7 @@ function Draggable(props: PlateElementProps) {
     }
   };
 
-  // clear up virtual multiple preview when drag end
+  // 拖动结束时清除虚拟多选预览
   React.useEffect(() => {
     if (!isDragging) {
       resetPreview();
@@ -258,12 +258,12 @@ const DragHandle = React.memo(function DragHandle({
                 ? blockSelection
                 : editor.api.blocks({ mode: 'highest' });
 
-            // If current block is not in selection, use it as the starting point
+            // 如果当前块不在选择中，则将其用作起点
             if (!selectionNodes.some(([node]) => node.id === element.id)) {
               selectionNodes = [[element, editor.api.findPath(element)!]];
             }
 
-            // Process selection nodes to include list children
+            // 处理选择节点以包含列表子节点
             const blocks = expandListItemsWithChildren(
               editor,
               selectionNodes
@@ -296,12 +296,12 @@ const DragHandle = React.memo(function DragHandle({
                 ? blockSelection
                 : editor.api.blocks({ mode: 'highest' });
 
-            // If current block is not in selection, use it as the starting point
+            // 如果当前块不在选择中，则将其用作起点
             if (!selectedBlocks.some(([node]) => node.id === element.id)) {
               selectedBlocks = [[element, editor.api.findPath(element)!]];
             }
 
-            // Process selection to include list children
+            // 处理选择以包含列表子节点
             const processedBlocks = expandListItemsWithChildren(
               editor,
               selectedBlocks
@@ -364,8 +364,7 @@ const createDragPreviewElements = (
   const ids: string[] = [];
 
   /**
-   * Remove data attributes from the element to avoid recognized as slate
-   * elements incorrectly.
+   * 从元素中移除数据属性，以避免被错误识别为 Slate 元素。
    */
   const removeDataAttributes = (element: HTMLElement) => {
     Array.from(element.attributes).forEach((attr) => {
@@ -386,7 +385,7 @@ const createDragPreviewElements = (
     const domNode = editor.api.toDOMNode(node)!;
     const newDomNode = domNode.cloneNode(true) as HTMLElement;
 
-    // Apply visual compensation for horizontal scroll
+    // 对水平滚动应用视觉补偿
     const applyScrollCompensation = (
       original: Element,
       cloned: HTMLElement
@@ -394,22 +393,22 @@ const createDragPreviewElements = (
       const scrollLeft = original.scrollLeft;
 
       if (scrollLeft > 0) {
-        // Create a wrapper to handle the scroll offset
+        // 创建一个包装器来处理滚动偏移
         const scrollWrapper = document.createElement('div');
         scrollWrapper.style.overflow = 'hidden';
         scrollWrapper.style.width = `${original.clientWidth}px`;
 
-        // Create inner container with the full content
+        // 创建包含完整内容的内部容器
         const innerContainer = document.createElement('div');
         innerContainer.style.transform = `translateX(-${scrollLeft}px)`;
         innerContainer.style.width = `${original.scrollWidth}px`;
 
-        // Move all children to the inner container
+        // 将所有子元素移动到内部容器
         while (cloned.firstChild) {
           innerContainer.append(cloned.firstChild);
         }
 
-        // Apply the original element's styles to maintain appearance
+        // 应用原始元素的样式以保持外观
         const originalStyles = window.getComputedStyle(original);
         cloned.style.padding = '0';
         innerContainer.style.padding = originalStyles.padding;
@@ -437,7 +436,7 @@ const createDragPreviewElements = (
 
       const distance = domNodeRect.top - lastDomNodeRect.bottom;
 
-      // Check if the two elements are adjacent (touching each other)
+      // 检查两个元素是否相邻（彼此接触）
       if (distance > 15) {
         wrapper.style.marginTop = `${distance}px`;
       }
@@ -471,22 +470,22 @@ const calculatePreviewTop = (
   const firstSelectedChild = blocks[0];
 
   const firstDomNode = editor.api.toDOMNode(firstSelectedChild)!;
-  // Get editor's top padding
+  // 获取编辑器的顶部内边距
   const editorPaddingTop = Number(
     window.getComputedStyle(editable).paddingTop.replace('px', '')
   );
 
-  // Calculate distance from first selected node to editor top
+  // 计算第一个选中节点到编辑器顶部的距离
   const firstNodeToEditorDistance =
     firstDomNode.getBoundingClientRect().top -
     editable.getBoundingClientRect().top -
     editorPaddingTop;
 
-  // Get margin top of first selected node
+  // 获取第一个选中节点的顶部外边距
   const firstMarginTopString = window.getComputedStyle(firstDomNode).marginTop;
   const marginTop = Number(firstMarginTopString.replace('px', ''));
 
-  // Calculate distance from current node to editor top
+  // 计算当前节点到编辑器顶部的距离
   const currentToEditorDistance =
     child.getBoundingClientRect().top -
     editable.getBoundingClientRect().top -

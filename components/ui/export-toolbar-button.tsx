@@ -68,7 +68,7 @@ export function ExportToolbarButton(props: DropdownMenuProps) {
     link.click();
     link.remove();
 
-    // Clean up the blob URL
+    // 清理 blob URL
     window.URL.revokeObjectURL(blobUrl);
   };
 

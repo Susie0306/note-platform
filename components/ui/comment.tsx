@@ -130,7 +130,7 @@ export function Comment(props: {
 
   const { tf } = useEditorPlugin(CommentPlugin);
 
-  // Replace to your own backend or refer to potion
+  // 替换为您自己的后端或参考 potion
   const isMyComment = currentUserId === comment.userId;
 
   const initialValue = comment.contentRich;
@@ -313,7 +313,7 @@ function CommentMoreDropdown(props: {
     if (!comment.id)
       return alert('You are operating too quickly, please try again later.');
 
-    // Find and update the discussion
+    // 查找并更新讨论
     const updatedDiscussions = editor
       .getOption(discussionPlugin, 'discussions')
       .map((discussion) => {
@@ -337,7 +337,7 @@ function CommentMoreDropdown(props: {
         };
       });
 
-    // Save back to session storage
+    // 保存回会话存储
     editor.setOption(discussionPlugin, 'discussions', updatedDiscussions);
     onRemoveComment?.();
   }, [comment.discussionId, comment.id, editor, onRemoveComment]);
@@ -445,10 +445,10 @@ export function CommentCreateForm({
     commentEditor.tf.reset();
 
     if (discussionId) {
-      // Get existing discussion
+      // 获取现有讨论
       const discussion = discussions.find((d) => d.id === discussionId);
       if (!discussion) {
-        // Mock creating suggestion
+        // 模拟创建建议
         const newDiscussion: TDiscussion = {
           id: discussionId,
           comments: [
@@ -473,7 +473,7 @@ export function CommentCreateForm({
         return;
       }
 
-      // Create reply comment
+      // 创建回复评论
       const comment: TComment = {
         id: nanoid(),
         contentRich: commentValue,
@@ -483,13 +483,13 @@ export function CommentCreateForm({
         userId: editor.getOption(discussionPlugin, 'currentUserId'),
       };
 
-      // Add reply to discussion comments
+      // 将回复添加到讨论评论
       const updatedDiscussion = {
         ...discussion,
         comments: [...discussion.comments, comment],
       };
 
-      // Filter out old discussion and add updated one
+      // 过滤掉旧讨论并添加更新的讨论
       const updatedDiscussions = discussions
         .filter((d) => d.id !== discussionId)
         .concat(updatedDiscussion);
@@ -510,7 +510,7 @@ export function CommentCreateForm({
       .join('');
 
     const _discussionId = nanoid();
-    // Mock creating new discussion
+    // 模拟创建新讨论
     const newDiscussion: TDiscussion = {
       id: _discussionId,
       comments: [

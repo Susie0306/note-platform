@@ -55,7 +55,6 @@ export function ThemeColorProvider({
   }, [themeColor])
 
   // 将 setThemeColor 加入依赖数组
-  // 因为上面加了 useCallback，这里加入它也是安全的，不会导致死循环
   const value = React.useMemo(
     () => ({
       themeColor,

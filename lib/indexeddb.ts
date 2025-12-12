@@ -123,7 +123,6 @@ export async function removeSyncTask(id: number) {
   await db.delete('syncQueue', id)
 }
 
-// (旧方法，保留兼容性，但 SyncManager 应该改用 getAll + remove 的组合以保证安全)
 export async function popSyncQueue() {
   const db = await getDB()
   const tx = db.transaction('syncQueue', 'readwrite')

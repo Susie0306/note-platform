@@ -263,7 +263,7 @@ export const useResolveSuggestion = (
 
     const previousPath = map.get(id);
 
-    // If there are no suggestion nodes in the corresponding path in the map, then update it.
+    // 如果映射中的相应路径中没有建议节点，则更新它。
     if (PathApi.isPath(previousPath)) {
       const nodes = api.suggestion.node({ id, at: previousPath, isText: true });
       const parentNode = api.node(previousPath);
@@ -332,7 +332,7 @@ export const useResolveSuggestion = (
         }),
       ];
 
-      // move line break to the end
+      // 将换行符移动到末尾
       entries.sort(([, path1], [, path2]) =>
         PathApi.isChild(path1, path2) ? -1 : 1
       );
@@ -342,7 +342,7 @@ export const useResolveSuggestion = (
       let properties: any = {};
       let newProperties: any = {};
 
-      // overlapping suggestion
+      // 重叠建议
       entries.forEach(([node]) => {
         if (TextApi.isText(node)) {
           const dataList = api.suggestion.dataList(node);
@@ -375,7 +375,7 @@ export const useResolveSuggestion = (
 
                   break;
                 }
-                // No default
+                // 无默认值
               }
             }
           });

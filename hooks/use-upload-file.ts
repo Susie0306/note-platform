@@ -61,7 +61,7 @@ export function useUploadFile({
 
       onUploadError?.(error);
 
-      // Mock upload for unauthenticated users
+      // 为未通过身份验证的用户模拟上传
       // toast.info('User not logged in. Mocking upload process.');
       const mockUploadedFile = {
         key: 'mock-key-0',
@@ -72,7 +72,7 @@ export function useUploadFile({
         url: URL.createObjectURL(file),
       } as UploadedFile;
 
-      // Simulate upload progress
+      // 模拟上传进度
       let progress = 0;
 
       const simulateProgress = async () => {

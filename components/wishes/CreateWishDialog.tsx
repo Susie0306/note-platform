@@ -1,12 +1,12 @@
 'use client'
 
 import React, { useState, useTransition } from 'react'
-import { createWish } from '@/app/actions/wishes'
 import { Loader2, Plus, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
-import { cn } from '@/lib/utils'
 
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { DatePicker } from '@/components/ui/date-picker'
 import {
   Dialog,
   DialogContent,
@@ -18,10 +18,10 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { DatePicker } from '@/components/ui/date-picker'
+import { createWish } from '@/app/actions/wishes'
 
 const WISH_TEMPLATES = [
-  { title: '去一次说走就走的旅行 ✈️', desc: '探索未知的世界' },
+  { title: '来一次说走就走的旅行 ✈️', desc: '探索未知的世界' },
   { title: '读完 10 本好书 📚', desc: '充实精神世界' },
   { title: '学会一项新技能 🎸', desc: '吉他/编程/画画' },
   { title: '坚持运动 50 天 🏃', desc: '强健体魄' },
@@ -61,8 +61,8 @@ export function CreateWishDialog() {
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/20">
-            <Sparkles className="h-6 w-6 text-primary" />
+          <div className="bg-primary/20 mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full">
+            <Sparkles className="text-primary h-6 w-6" />
           </div>
           <DialogTitle className="text-center">许下一个小希冀</DialogTitle>
           <DialogDescription className="text-center">
@@ -70,19 +70,21 @@ export function CreateWishDialog() {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-2 gap-2 mb-2">
+        <div className="mb-2 grid grid-cols-2 gap-2">
           {WISH_TEMPLATES.map((template) => (
             <button
               key={template.title}
               type="button"
               onClick={() => setTitle(template.title)}
               className={cn(
-                "flex flex-col items-start p-3 rounded-lg border text-left transition-colors hover:bg-primary/5",
-                title === template.title ? "border-primary bg-primary/10 ring-1 ring-primary" : "border-gray-200"
+                'hover:bg-primary/5 flex flex-col items-start rounded-lg border p-3 text-left transition-colors',
+                title === template.title
+                  ? 'border-primary bg-primary/10 ring-primary ring-1'
+                  : 'border-gray-200'
               )}
             >
               <span className="text-sm font-medium text-gray-900">{template.title}</span>
-              <span className="text-xs text-gray-500 mt-1">{template.desc}</span>
+              <span className="mt-1 text-xs text-gray-500">{template.desc}</span>
             </button>
           ))}
         </div>
@@ -105,7 +107,11 @@ export function CreateWishDialog() {
             <DatePicker date={date} setDate={setDate} />
           </div>
           <DialogFooter>
-            <Button type="submit" disabled={isPending} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
+            <Button
+              type="submit"
+              disabled={isPending}
+              className="bg-primary text-primary-foreground hover:bg-primary/90 w-full"
+            >
               {isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -121,4 +127,3 @@ export function CreateWishDialog() {
     </Dialog>
   )
 }
-

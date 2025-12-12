@@ -41,10 +41,7 @@ export async function getWish(id: string) {
   })
 
   // 如果心愿不存在或属于他人，或者是已删除的，则返回 null
-  // 注意：如果是回收站逻辑，可能需要单独的 getDeletedWish 或者允许 deletedAt 不为 null
-  // 这里暂时严格一些
   if (!wish || wish.deletedAt !== null) {
-    // 再检查一下是否是当前用户的（虽然查不到也不影响，但严谨点）
     return null
   }
 
@@ -80,7 +77,7 @@ export async function createWish(formData: FormData) {
   })
 
   revalidatePath('/wishes')
-  revalidatePath('/') // 首页也有概览
+  revalidatePath('/')
 }
 
 // 更新进度
@@ -91,11 +88,10 @@ export async function updateWishProgress(wishId: string, progress: number) {
   const dbUser = await prisma.user.findUnique({ where: { clerkId: userId } })
   if (!dbUser) throw new Error('User not found')
 
-  // 🔒 安全修复：确保只能更新自己的心愿
   await prisma.wish.update({
-    where: { 
+    where: {
       id: wishId,
-      userId: dbUser.id 
+      userId: dbUser.id,
     },
     data: {
       progress,
@@ -115,9 +111,8 @@ export async function createWishLog(wishId: string, content: string) {
   const dbUser = await prisma.user.findUnique({ where: { clerkId: userId } })
   if (!dbUser) throw new Error('User not found')
 
-  // 🔒 权限校验：确保心愿属于当前用户
   const wish = await prisma.wish.findUnique({
-    where: { id: wishId, userId: dbUser.id }
+    where: { id: wishId, userId: dbUser.id },
   })
   if (!wish) throw new Error('Wish not found or unauthorized')
 

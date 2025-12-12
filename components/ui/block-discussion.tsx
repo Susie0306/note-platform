@@ -52,7 +52,7 @@ export const BlockDiscussion: RenderNodeWrapper<AnyPluginConfig> = (props) => {
   const commentsApi = editor.getApi(CommentPlugin).comment;
   const blockPath = editor.api.findPath(element);
 
-  // avoid duplicate in table or column
+  // 避免在表格或列中重复
   if (!blockPath || blockPath.length > 1) return;
 
   const draftCommentNode = commentsApi.node({ at: blockPath, isDraft: true });
@@ -127,7 +127,7 @@ const BlockCommentContent = ({
 
   const [_open, setOpen] = React.useState(selected);
 
-  // in some cases, we may comment the multiple blocks
+  // 在某些情况下，我们可以评论多个块
   const commentingCurrent =
     !!commentingBlock && PathApi.equals(blockPath, commentingBlock);
 
@@ -324,7 +324,7 @@ const useResolvedDiscussion = (
 
     const previousPath = map.get(id);
 
-    // If there are no comment nodes in the corresponding path in the map, then update it.
+    // 如果映射中的相应路径中没有评论节点，则更新它。
     if (PathApi.isPath(previousPath)) {
       const nodes = api.comment.node({ id, at: previousPath });
 
@@ -335,7 +335,7 @@ const useResolvedDiscussion = (
 
       return;
     }
-    // TODO: fix throw error
+    // TODO: 修复抛出错误
     setOption('uniquePathMap', new Map(map).set(id, blockPath));
   });
 
@@ -349,7 +349,7 @@ const useResolvedDiscussion = (
       createdAt: new Date(d.createdAt),
     }))
     .filter((item: TDiscussion) => {
-      /** If comment cross blocks just show it in the first block */
+      /** 如果评论跨越块，只在第一个块中显示 */
       const commentsPathMap = getOption('uniquePathMap');
       const firstBlockPath = commentsPathMap.get(item.id);
 

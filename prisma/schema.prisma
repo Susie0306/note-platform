@@ -4,8 +4,8 @@ generator client {
 
 datasource db {
   provider  = "postgresql"
-  url       = env("DATABASE_URL")   // 运行时用连接池（6543）
-  directUrl = env("DIRECT_URL")     // 迁移时用直连（5432）
+  url       = env("DATABASE_URL")   
+  directUrl = env("DIRECT_URL")     
 }
         
 // 1. 用户模型
@@ -28,7 +28,6 @@ model Note {
   title     String
   content   String?  @db.Text // 存储 Markdown 内容，允许为空
   
-  // P2 AI 预留字段：用来存 AI 生成的摘要
   summary   String?  @db.Text 
   
   // 软删除标记，可为空
@@ -45,9 +44,6 @@ model Note {
   
   folderId  String?
   folder    Folder?  @relation(fields: [folderId], references: [id])
-  
-  // P2 AI 检索预留：先不写 vector 类型（配置较复杂），
-  // 后续会在这里通过 SQL 扩展添加 embedding 字段。
 
   @@index([userId]) // 优化查询性能
   @@index([folderId]) // 优化文件夹筛选
@@ -89,8 +85,7 @@ model Folder {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // 确保同一父级下名称唯一（对于根目录，parentId 为 null，Postgres 默认允许多个 null，
-  // 但我们通过业务逻辑控制或复合唯一索引通常在应用层校验更灵活，这里先保留基本索引）
+  // 确保同一父级下名称唯一
   @@index([userId])
 }
 

@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useMemo, useRef, useState, useTransition } from 'react'
+import dynamic from 'next/dynamic'
 import { useUser } from '@clerk/nextjs'
 import { ClientSideSuspense } from '@liveblocks/react/suspense'
 import { Cloud, CloudOff, HardDrive, Save } from 'lucide-react'
@@ -13,19 +14,36 @@ import {
   type NoteData,
   type NoteUpdatePayload,
 } from '@/lib/indexeddb'
-import dynamic from 'next/dynamic'
-// ✅ 引用新的、优化后的编辑器组件 (Dynamic Import)
-const PlateEditor = dynamic(() => import('@/components/editor/plate-editor').then(mod => mod.PlateEditor), {
-  ssr: false,
-  loading: () => <div className="h-[500px] w-full animate-pulse bg-muted/20 rounded-md" />
-})
+import { RoomProvider, useMyPresence, useOthers } from '@/lib/liveblocks.config'
+import { FolderSelector } from '@/components/FolderSelector'
 import { ShareButton } from '@/components/ShareButton'
 import { TagInput } from '@/components/TagInput'
-import { FolderSelector } from '@/components/FolderSelector'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { RoomProvider, useMyPresence, useOthers } from '@/lib/liveblocks.config'
 import { updateNote } from '@/app/actions/notes'
+
+type Presence = {
+  cursor: { x: number; y: number } | null
+  name: string
+  color: string
+}
+
+type UserMeta = {
+  id: string
+  info: {
+    name: string
+    color: string
+    avatar: string
+  }
+}
+
+const PlateEditor = dynamic(
+  () => import('@/components/editor/plate-editor').then((mod) => mod.PlateEditor),
+  {
+    ssr: false,
+    loading: () => <div className="bg-muted/20 h-[500px] w-full animate-pulse rounded-md" />,
+  }
+)
 
 interface NoteEditorProps {
   noteId: string
@@ -66,7 +84,7 @@ const pickColor = (seed: string) => {
 export function NoteEditor(props: NoteEditorProps) {
   const { user, isLoaded } = useUser()
   const roomId = `note-${props.noteId}`
-  const displayName = isLoaded ? user?.fullName ?? user?.username ?? '我' : '我'
+  const displayName = isLoaded ? (user?.fullName ?? user?.username ?? '我') : '我'
   const userColor = useMemo(() => pickColor(user?.id ?? roomId), [roomId, user?.id])
 
   return (
@@ -77,7 +95,7 @@ export function NoteEditor(props: NoteEditorProps) {
     >
       <ClientSideSuspense
         fallback={
-          <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+          <div className="text-muted-foreground flex h-full items-center justify-center text-sm">
             正在连接协同编辑...
           </div>
         }
@@ -123,17 +141,15 @@ function NoteEditorContent({
   const collaboratorAvatars = useMemo(
     () => [
       { id: 'me', name: userName, color: userColor },
-      ...others.map((other) => ({
-        id: `conn-${other.connectionId}`,
-        name:
-          (other.presence as any)?.name ??
-          (other.info as any)?.name ??
-          '协作者',
-        color:
-          (other.presence as any)?.color ??
-          (other.info as any)?.color ??
-          collaboratorColors[0],
-      })),
+      ...others.map((other) => {
+        const presence = other.presence as Presence
+        const info = other.info as UserMeta['info']
+        return {
+          id: `conn-${other.connectionId}`,
+          name: presence?.name ?? info?.name ?? '协作者',
+          color: presence?.color ?? info?.color ?? collaboratorColors[0],
+        }
+      }),
     ],
     [others, userColor, userName]
   )
@@ -214,51 +230,51 @@ function NoteEditorContent({
     <div className="flex h-[calc(100dvh-130px)] flex-col space-y-4">
       {/* 顶部元数据栏 */}
       <div className="flex flex-col gap-2">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="无标题笔记"
-            className="placeholder:text-muted-foreground/50 h-auto w-full min-w-0 border-none px-0 text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight shadow-none focus-visible:ring-0"
+            className="placeholder:text-muted-foreground/50 h-auto w-full min-w-0 border-none px-0 text-3xl font-extrabold tracking-tight shadow-none focus-visible:ring-0 sm:text-4xl md:text-5xl"
           />
-          <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground/80">
+          <div className="text-muted-foreground/80 flex flex-wrap items-center gap-3 text-sm">
             <div className="flex flex-col items-center justify-center gap-0.5">
               <div className="flex -space-x-2">
                 {collaboratorAvatars.slice(0, 4).map((member) => (
                   <span
                     key={member.id}
-                    className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-background text-[9px] font-medium text-white shadow-sm ring-1 ring-background"
+                    className="border-background ring-background inline-flex h-6 w-6 items-center justify-center rounded-full border text-[9px] font-medium text-white shadow-sm ring-1"
                     style={{ backgroundColor: member.color }}
                   >
                     {member.name?.[0] ?? '友'}
                   </span>
                 ))}
               </div>
-              <span className="text-[10px] text-muted-foreground leading-none">{others.length + 1} 人在线</span>
+              <span className="text-muted-foreground text-[10px] leading-none">
+                {others.length + 1} 人在线
+              </span>
             </div>
-            <FolderSelector 
-              noteId={noteId} 
-              currentFolderId={folderId} 
-              onChange={setFolderId}
-            />
+            <FolderSelector noteId={noteId} currentFolderId={folderId} onChange={setFolderId} />
             <ShareButton />
             <div className="flex items-center gap-1 text-xs sm:text-sm">
               {isSaving ? (
                 <span className="flex items-center gap-1 text-blue-600 dark:text-blue-400">
-                  <Cloud className="h-3 w-3 sm:h-4 sm:w-4 animate-pulse" /> 保存中...
+                  <Cloud className="h-3 w-3 animate-pulse sm:h-4 sm:w-4" /> 保存中...
                 </span>
               ) : lastSaved ? (
-                <span className="flex items-center gap-1 text-muted-foreground">
+                <span className="text-muted-foreground flex items-center gap-1">
                   {saveLocation === 'local' ? (
-                    <HardDrive className="h-3 w-3 sm:h-4 sm:w-4 text-orange-600 dark:text-orange-400" />
+                    <HardDrive className="h-3 w-3 text-orange-600 sm:h-4 sm:w-4 dark:text-orange-400" />
                   ) : (
-                    <Cloud className="h-3 w-3 sm:h-4 sm:w-4 text-green-600 dark:text-green-400" />
+                    <Cloud className="h-3 w-3 text-green-600 sm:h-4 sm:w-4 dark:text-green-400" />
                   )}
-                  <span className="hidden xs:inline">{saveLocation === 'local' ? '已存本地' : '已同步'}</span>
+                  <span className="xs:inline hidden">
+                    {saveLocation === 'local' ? '已存本地' : '已同步'}
+                  </span>
                   {lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
               ) : (
-                <span className="flex items-center gap-1 text-muted-foreground">
+                <span className="text-muted-foreground flex items-center gap-1">
                   <CloudOff className="h-3 w-3 sm:h-4 sm:w-4" /> 未保存
                 </span>
               )}
@@ -268,7 +284,7 @@ function NoteEditorContent({
               disabled={isSaving}
               variant="outline"
               size="sm"
-              className="ml-auto md:ml-2 border-input bg-background hover:bg-background hover:text-foreground text-foreground shadow-sm"
+              className="border-input bg-background hover:bg-background hover:text-foreground text-foreground ml-auto shadow-sm md:ml-2"
             >
               <Save className="mr-2 h-4 w-4" /> <span className="hidden sm:inline">保存</span>
             </Button>
@@ -280,7 +296,7 @@ function NoteEditorContent({
       {/* 编辑器主体 */}
       <div className="flex flex-1 overflow-hidden rounded-lg border bg-white shadow-sm dark:bg-zinc-950">
         <div className="h-full w-full overflow-y-auto">
-          {/* ✅ 核心集成点：数据双向绑定 */}
+          {/* 核心集成点：数据双向绑定 */}
           <PlateEditor
             roomId={roomId}
             userName={userName}
