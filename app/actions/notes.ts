@@ -109,10 +109,13 @@ export async function updateNoteFolder(noteId: string, folderId: string | null) 
   const dbUser = await prisma.user.findUnique({ where: { clerkId: userId } })
   if (!dbUser) throw new Error('User not found')
 
+  // 如果 folderId 为 undefined，将其转换为 null
+  const targetFolderId = folderId === undefined ? null : folderId
+
   // 验证文件夹（如果存在）属于用户
-  if (folderId) {
+  if (targetFolderId) {
     const folder = await prisma.folder.findUnique({
-      where: { id: folderId },
+      where: { id: targetFolderId },
     })
     if (!folder || folder.userId !== dbUser.id) {
       throw new Error('Invalid folder')
@@ -121,7 +124,7 @@ export async function updateNoteFolder(noteId: string, folderId: string | null) 
 
   await prisma.note.update({
     where: { id: noteId, userId: dbUser.id },
-    data: { folderId },
+    data: { folderId: targetFolderId },
   })
 
   revalidatePath('/notes')
