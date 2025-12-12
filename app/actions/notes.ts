@@ -66,7 +66,10 @@ export async function updateNote(
 
   // 更新数据库
   await prisma.note.update({
-    where: { id: noteId },
+    where: { 
+      id: noteId,
+      userId: dbUser.id // 🔒 安全修复：确保只能更新自己的笔记
+    },
     data: {
       title,
       content,
@@ -129,8 +132,14 @@ export async function deleteNote(noteId: string) {
   const { userId } = await auth()
   if (!userId) throw new Error('Unauthorized')
 
+  const dbUser = await prisma.user.findUnique({ where: { clerkId: userId } })
+  if (!dbUser) throw new Error('User not found')
+
   await prisma.note.update({
-    where: { id: noteId },
+    where: { 
+      id: noteId,
+      userId: dbUser.id // 🔒 安全修复
+    },
     data: { deletedAt: new Date() }, // 打上删除标记
   })
 
@@ -143,8 +152,14 @@ export async function restoreNote(noteId: string) {
   const { userId } = await auth()
   if (!userId) throw new Error('Unauthorized')
 
+  const dbUser = await prisma.user.findUnique({ where: { clerkId: userId } })
+  if (!dbUser) throw new Error('User not found')
+
   await prisma.note.update({
-    where: { id: noteId },
+    where: { 
+      id: noteId,
+      userId: dbUser.id // 🔒 安全修复
+    },
     data: { deletedAt: null }, // 清除删除标记
   })
 
@@ -157,8 +172,14 @@ export async function deleteNotePermanently(noteId: string) {
   const { userId } = await auth()
   if (!userId) throw new Error('Unauthorized')
 
+  const dbUser = await prisma.user.findUnique({ where: { clerkId: userId } })
+  if (!dbUser) throw new Error('User not found')
+
   await prisma.note.delete({
-    where: { id: noteId },
+    where: { 
+      id: noteId,
+      userId: dbUser.id // 🔒 安全修复
+    },
   })
 
   revalidatePath('/trash')

@@ -88,9 +88,15 @@ export async function updateWishProgress(wishId: string, progress: number) {
   const { userId } = await auth()
   if (!userId) throw new Error('Unauthorized')
 
-  // 简单鉴权：略，实际应查 wish.userId === dbUser.id
+  const dbUser = await prisma.user.findUnique({ where: { clerkId: userId } })
+  if (!dbUser) throw new Error('User not found')
+
+  // 🔒 安全修复：确保只能更新自己的心愿
   await prisma.wish.update({
-    where: { id: wishId },
+    where: { 
+      id: wishId,
+      userId: dbUser.id 
+    },
     data: {
       progress,
       status: progress === 100 ? 'COMPLETED' : 'IN_PROGRESS',
@@ -105,6 +111,15 @@ export async function updateWishProgress(wishId: string, progress: number) {
 export async function createWishLog(wishId: string, content: string) {
   const { userId } = await auth()
   if (!userId) throw new Error('Unauthorized')
+
+  const dbUser = await prisma.user.findUnique({ where: { clerkId: userId } })
+  if (!dbUser) throw new Error('User not found')
+
+  // 🔒 权限校验：确保心愿属于当前用户
+  const wish = await prisma.wish.findUnique({
+    where: { id: wishId, userId: dbUser.id }
+  })
+  if (!wish) throw new Error('Wish not found or unauthorized')
 
   await prisma.wishLog.create({
     data: {
