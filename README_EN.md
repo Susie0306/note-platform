@@ -1,10 +1,10 @@
-# Xiji (熙记) - Next-Generation Collaborative AI Note-Taking Platform
+# Xiji (熙记) - protecting every small wish through notes
 
 [English](./README_EN.md) | [简体中文](./README.md)
 
-**Xiji** is a modern note platform centered on both emotional needs and practical utility. With the mission of **“protecting every small wish through notes”**, it builds a product ecosystem that balances functionality and warmth.
+**Xiji** is a modern note platform centered on both emotional needs and practical utility. With the mission of “protecting every small wish through notes”, it builds a product ecosystem that balances functionality and warmth.
 
-Xiji is not only a knowledge note tool, but also an emotional carrier that safeguards users’ life wishes. Through practical baseline features, emotionally designed special modules, and convenient cross‑device sync, every record becomes meaningful — every small wish can be seen, tracked, and achieved — aiming to become the **“witness of your beautiful moments.”**
+Xiji is not only a knowledge note tool, but also an emotional carrier that safeguards users’ life wishes. Through practical baseline features, emotionally designed special modules, and convenient cross‑device sync, every record becomes meaningful — every small wish can be seen, tracked, and achieved — aiming to become the “witness of your beautiful moments.”
 
 From a technical perspective, the project is built on **Next.js 14 (App Router)**, deeply integrating a smooth **Local‑First** experience with **Real‑Time Collaboration**, showcasing technical depth in complex state management, offline synchronization, and rich text customization.
 
