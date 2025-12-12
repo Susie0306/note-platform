@@ -11,7 +11,7 @@ This project highlights technical depth in **complex state management**, **real-
 - **📝 Powerful Rich Text Editor**: Built on Plate.js (Slate), supporting Markdown syntax, Slash Commands, code block highlighting, and media embedding.
 - **🤝 Real-Time Collaborative Editing**: Multiple users editing the same document simultaneously, with real-time visible cursors and millisecond-level synchronization (Powered by Liveblocks & Yjs).
 - **⚡️ Local-First & Offline Support**: Uses IndexedDB for local storage, remaining usable offline, and automatically synchronizing data via a Sync Queue upon network recovery.
-- **🤖 AI Intelligent Assistance**: Integrated Vercel AI SDK, supporting streaming text generation, content continuation, and polishing.
+- **🤖 AI Intelligent Assistance**: Adopts a hybrid AI architecture—utilizing Vercel AI SDK for Copilot-style auto-completion, combined with custom OpenAI/DeepSeek integration for advanced commands like polishing and summarization.
 - **📂 Flexible Organization Structure**: Supports infinite nested folders and a many-to-many tag classification system.
 - **🌟 Wishes & Memories**: Unique product features supporting progress tracking for wish lists and time-based "Memory Capsules".
 

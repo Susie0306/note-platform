@@ -2,7 +2,6 @@
 
 import type { TElement } from 'platejs';
 
-import { faker } from '@faker-js/faker';
 import { CopilotPlugin } from '@platejs/ai/react';
 import { serializeMd, stripMarkdown } from '@platejs/markdown';
 
@@ -29,11 +28,9 @@ export const CopilotKit = [
   - CRITICAL: Avoid starting a new block. Do not use block formatting like >, #, 1., 2., -, etc. The suggestion should continue in the same block as the context.
   - If no context is provided or you can't generate a continuation, return "0" without explanation.`,
         },
-        onError: () => {
-          // 模拟 API 响应。当您实现路由 /api/ai/copilot 时将其删除
-          api.copilot.setBlockSuggestion({
-            text: stripMarkdown(faker.lorem.sentence()),
-          });
+        onError: (err) => {
+          console.error('Copilot AI Error:', err);
+          // 不再使用 Faker 生成假数据，避免误导
         },
         onFinish: (_, completion) => {
           if (completion === '0') return;
