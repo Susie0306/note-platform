@@ -37,6 +37,7 @@ export default async function Home() {
       _count: {
         select: { 
           notes: true,
+          sharedNotes: true, // 包含协作笔记的数量
           wishes: true // 获取心愿数量
         },
       },
@@ -73,9 +74,15 @@ export default async function Home() {
     )
   }
 
-  // 获取最近的 3 条笔记
+  // 获取最近的 3 条笔记 (包括自己创建的 和 协作的)
   const recentNotes = await prisma.note.findMany({
-    where: { userId: dbUser.id, deletedAt: null },
+    where: { 
+      deletedAt: null,
+      OR: [
+        { userId: dbUser.id },
+        { collaborators: { some: { id: dbUser.id } } }
+      ]
+    },
     orderBy: { updatedAt: 'desc' },
     take: 3,
   })
@@ -115,7 +122,7 @@ export default async function Home() {
             <FileText className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{dbUser._count.notes}</div>
+            <div className="text-2xl font-bold">{dbUser._count.notes + dbUser._count.sharedNotes}</div>
             <p className="text-muted-foreground text-xs">记录的点点滴滴</p>
           </CardContent>
         </Card>
