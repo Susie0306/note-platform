@@ -1,17 +1,19 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@clerk/nextjs/server'
-import { Search, Tag } from 'lucide-react'
+import { Search, Sparkles, Tag } from 'lucide-react'
 
 import prisma from '@/lib/prisma'
 import { NoteCard } from '@/components/NoteCard'
 import { SearchBar } from '@/components/SearchBar'
 import { Badge } from '@/components/ui/badge'
+import { expandQueryWithAI } from '@/app/actions/ai-search'
 
 interface SearchPageProps {
   searchParams: Promise<{
     q?: string
     tag?: string
+    ai?: string
   }>
 }
 
@@ -28,11 +30,13 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const params = await searchParams
   const queryText = params.q || ''
   const queryTag = params.tag || ''
+  const isAiMode = params.ai === 'true'
 
   // 构建动态查询条件
   // 只有当 queryText 或 queryTag 存在时才查询
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let notes: any[] = []
+  let aiKeywords: string[] = []
   const hasSearchCondition = queryText || queryTag
 
   if (hasSearchCondition) {
@@ -42,11 +46,27 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
     // 如果有文字搜索
     if (queryText) {
+      const searchTerms = [queryText]
+
+      // AI 扩展逻辑
+      if (isAiMode) {
+        // 并行请求数据库和 AI 可能会更快，但这里我们需要 AI 的结果来构建 SQL
+        // 所以必须 await
+        try {
+          aiKeywords = await expandQueryWithAI(queryText)
+          if (aiKeywords.length > 0) {
+             searchTerms.push(...aiKeywords)
+          }
+        } catch (e) {
+          console.error('AI Search Error', e)
+        }
+      }
+
       andConditions.push({
-        OR: [
-          { title: { contains: queryText, mode: 'insensitive' } },
-          { content: { contains: queryText, mode: 'insensitive' } },
-        ],
+        OR: searchTerms.flatMap(term => [
+          { title: { contains: term, mode: 'insensitive' } },
+          { content: { contains: term, mode: 'insensitive' } },
+        ]),
       })
     }
 
@@ -85,22 +105,34 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       </div>
 
       {/* 展示当前筛选状态 (Active Filters) */}
-      {queryTag && (
-        <div className="text-muted-foreground flex items-center gap-2 text-sm">
-          <span>当前筛选标签:</span>
-          <Badge variant="secondary" className="gap-1 pr-1">
-            <Tag className="h-3 w-3" />
-            {queryTag}
-            {/* 点击 X 清除标签筛选 (保留文字搜索 q) */}
-            <Link
-              href={`/search${queryText ? `?q=${queryText}` : ''}`}
-              className="hover:text-foreground ml-1"
-            >
-              ×
-            </Link>
-          </Badge>
-        </div>
-      )}
+      <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground min-h-[2rem]">
+        {queryTag && (
+          <div className="flex items-center gap-2">
+            <span>标签:</span>
+            <Badge variant="secondary" className="gap-1 pr-1">
+              <Tag className="h-3 w-3" />
+              {queryTag}
+              {/* 点击 X 清除标签筛选 (保留文字搜索 q 和 ai 状态) */}
+              <Link
+                href={`/search?q=${encodeURIComponent(queryText)}${isAiMode ? '&ai=true' : ''}`}
+                className="hover:text-foreground ml-1"
+              >
+                ×
+              </Link>
+            </Badge>
+          </div>
+        )}
+
+        {/* 显示 AI 扩展词 */}
+        {isAiMode && aiKeywords.length > 0 && (
+          <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2 duration-500">
+             <div className="flex items-center gap-1.5 rounded-full bg-indigo-100/50 dark:bg-indigo-500/10 px-3 py-1 text-xs font-medium text-indigo-600 dark:text-indigo-300 border border-indigo-200/50 dark:border-indigo-500/20">
+               <Sparkles className="h-3 w-3" />
+               <span>AI 联想: {aiKeywords.join('、')}</span>
+             </div>
+          </div>
+        )}
+      </div>
 
       {/* 结果展示 */}
       {hasSearchCondition ? (

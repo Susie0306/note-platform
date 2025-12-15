@@ -1,11 +1,12 @@
 'use client'
 
 import React, { useEffect, useMemo, useRef } from 'react'
-import { useMutation, useRoom, useStorage } from '@liveblocks/react'
+import { useMutation, useRoom, useStorage, useUpdateMyPresence } from '@liveblocks/react'
 import { Plate, usePlateEditor } from 'platejs/react'
 
 import { EditorKit } from '@/components/editor-kit'
 import { Editor, EditorContainer } from '@/components/ui/editor'
+import { LiveblocksCursorOverlay } from '@/components/LiveblocksCursorOverlay'
 
 interface PlateEditorProps {
   initialMarkdown?: string
@@ -109,6 +110,12 @@ export function PlateEditor({
   const isApplyingRemoteChangeRef = useRef(false)
   const lastUserInputTimeRef = useRef<number>(0)
   const editorHasFocusRef = useRef(false)
+  
+  // 用于 CursorOverlay 的容器引用
+  const containerRef = useRef<HTMLDivElement>(null)
+  
+  // 更新 Presence
+  const updateMyPresence = useUpdateMyPresence()
 
   // 将编辑器更改同步到 Liveblocks Storage（当用户输入时）
   const handleEditorChange = () => {
@@ -326,6 +333,15 @@ export function PlateEditor({
           lastUserInputTimeRef.current = Date.now()
           editorHasFocusRef.current = true
         }
+        
+        // 协同光标同步
+        if (isCollaborative) {
+          // 这里使用 editor.selection 它是当前最新的
+          // 不需要防抖，因为光标移动需要实时性
+          // 但是 onValueChange 可能不会在仅光标移动时触发？
+          // Plate 的 onValueChange 通常是在 document 变化时触发
+          // 需要确认 Plate 是否有 onSelectionChange
+        }
 
         onChange?.(md)
         // 触发同步到 Liveblocks Storage
@@ -333,8 +349,14 @@ export function PlateEditor({
           debouncedHandleChange()
         }
       }}
+      onSelectionChange={(editor) => {
+         if (isCollaborative && editor.selection) {
+            updateMyPresence({ selection: editor.selection })
+         }
+      }}
     >
-      <EditorContainer>
+      <EditorContainer ref={containerRef}>
+        {isCollaborative && <LiveblocksCursorOverlay containerRef={containerRef} />}
         {isCollaborative && !storageReady && (
           <div className="pointer-events-none absolute top-0 right-0 left-0 z-10 flex justify-center p-2">
             <span className="text-muted-foreground bg-background/80 rounded border px-2 py-0.5 text-[10px] shadow-sm">

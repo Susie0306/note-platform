@@ -24,6 +24,7 @@ import { updateNote } from '@/app/actions/notes'
 
 type Presence = {
   cursor: { x: number; y: number } | null
+  selection: any | null // Slate Selection
   name: string
   color: string
 }
@@ -90,7 +91,7 @@ export function NoteEditor(props: NoteEditorProps) {
   return (
     <RoomProvider
       id={roomId}
-      initialPresence={{ cursor: null, name: displayName, color: userColor }}
+      initialPresence={{ cursor: null, selection: null, name: displayName, color: userColor }}
       initialStorage={{ content: props.initialContent || '' }}
     >
       <ClientSideSuspense

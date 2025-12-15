@@ -1,13 +1,12 @@
-import { createOpenAI } from '@ai-sdk/openai'
-import { streamText } from 'ai'
-
-// 创建 DeepSeek 专用的 provider 实例
-const deepseek = createOpenAI({
-  baseURL: 'https://api.deepseek.com',
-  apiKey: process.env.DEEPSEEK_API_KEY,
-})
+import OpenAI from 'openai'
+import { OpenAIStream, StreamingTextResponse } from 'ai'
 
 export const runtime = 'edge'
+
+const openai = new OpenAI({
+  baseURL: 'https://api.deepseek.com',
+  apiKey: process.env.DEEPSEEK_API_KEY || process.env.DEEPSEEK_API,
+})
 
 export async function POST(req: Request) {
   const { prompt, command, context } = await req.json()
@@ -26,12 +25,19 @@ export async function POST(req: Request) {
     userPrompt = `笔记内容：\n${context}`
   }
 
-  const result = await streamText({
-    model: deepseek('deepseek-chat'),
-    system: systemPrompt,
-    prompt: userPrompt,
+  const response = await openai.chat.completions.create({
+    model: 'deepseek-chat',
+    stream: true,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ],
     temperature: 0.7,
   })
 
-  return result.toTextStreamResponse()
+  // Convert the response into a friendly text-stream
+  const stream = OpenAIStream(response)
+  
+  // Respond with the stream
+  return new StreamingTextResponse(stream)
 }
