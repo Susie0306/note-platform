@@ -1,5 +1,4 @@
 import OpenAI from 'openai'
-import { OpenAIStream, StreamingTextResponse } from 'ai'
 
 export const runtime = 'edge'
 
@@ -35,9 +34,15 @@ export async function POST(req: Request) {
     temperature: 0.7,
   })
 
-  // Convert the response into a friendly text-stream
-  const stream = OpenAIStream(response)
+  // 直接返回标准 Response 对象，兼容 Vercel AI SDK 前端
+  // 按照 OpenAI 官方流式响应格式返回
+  const stream = response.toReadableStream()
   
-  // Respond with the stream
-  return new StreamingTextResponse(stream)
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+    }
+  })
 }
