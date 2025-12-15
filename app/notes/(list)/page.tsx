@@ -74,20 +74,51 @@ export default async function NotesPage({ searchParams }: NotesPageProps) {
   if (dbUser) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {
-      userId: dbUser.id,
       deletedAt: null,
+      OR: [
+        { userId: dbUser.id },
+        { collaborators: { some: { id: dbUser.id } } }
+      ]
     }
 
+    // 如果指定了文件夹或标签，通常只在自己的笔记中筛选（或者如果共享笔记也有标签，可以放宽）
+    // 目前简单处理：如果是筛选模式，就只筛选属性
     if (folderId) {
       where.folderId = folderId
+      // 移除 OR 条件，因为通常 folder 是个人的。
+      // 如果要支持共享文件夹，逻辑会更复杂。现在假设共享笔记没有归入接收者的文件夹。
+      // 但为了安全，我们保持 OR 限制，即只能看自己相关的
+      where.AND = [
+        { folderId },
+        {
+           OR: [
+             { userId: dbUser.id },
+             { collaborators: { some: { id: dbUser.id } } }
+           ]
+        }
+      ]
+      delete where.OR
+      delete where.folderId // 移入 AND
     }
 
     if (tagId) {
-      where.tags = {
-        some: {
-          id: tagId,
+       // 同上逻辑
+       where.AND = [
+        {
+          tags: {
+            some: {
+              id: tagId,
+            },
+          }
         },
-      }
+        {
+           OR: [
+             { userId: dbUser.id },
+             { collaborators: { some: { id: dbUser.id } } }
+           ]
+        }
+      ]
+      delete where.OR
     }
 
     const [data, count] = await Promise.all([

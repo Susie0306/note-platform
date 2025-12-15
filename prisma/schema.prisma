@@ -17,6 +17,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   notes     Note[]   // 一个人可以有很多笔记
+  sharedNotes Note[] @relation("SharedNotes") // 协作的笔记
   tags      Tag[]    // 一个人可以有很多标签
   folders   Folder[] // 一个人可以有很多文件夹
   wishes    Wish[]   // 一个人可以有很多心愿
@@ -40,6 +41,8 @@ model Note {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
+  collaborators User[] @relation("SharedNotes") // 协作者
+
   tags      Tag[]    // 一个笔记可以有多个标签
   
   folderId  String?
