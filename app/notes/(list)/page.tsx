@@ -157,7 +157,12 @@ export default async function NotesPage({ searchParams }: NotesPageProps) {
       </div>
 
       {/* 笔记列表组件 - 处理批量选择 */}
-      <NotesList initialNotes={notes} />
+      <NotesList 
+        initialNotes={notes} 
+        totalCount={totalCount}
+        folderId={folderId}
+        tagId={tagId}
+      />
 
       {/* 分页控制栏 */}
       {totalPages > 1 && (

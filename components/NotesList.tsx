@@ -9,7 +9,7 @@ import { toast } from 'sonner'
 import { NoteCard } from '@/components/NoteCard'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
-import { bulkDeleteNotes } from '@/app/actions/notes'
+import { bulkDeleteAllMatchingNotes, bulkDeleteNotes } from '@/app/actions/notes'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,13 +19,20 @@ import {
 
 interface NotesListProps {
   initialNotes: (Note & { tags: Tag[] })[]
+  totalCount: number
+  folderId?: string
+  tagId?: string
 }
 
-export function NotesList({ initialNotes }: NotesListProps) {
+export function NotesList({ initialNotes, totalCount, folderId, tagId }: NotesListProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isSelectionMode, setIsSelectionMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  
+  // 新增：跨页全选状态
+  const [isSelectAllMatching, setIsSelectAllMatching] = useState(false)
+  
   const [isPending, startTransition] = useTransition()
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
@@ -51,17 +58,34 @@ export function NotesList({ initialNotes }: NotesListProps) {
   const toggleSelectionMode = () => {
     setIsSelectionMode(!isSelectionMode)
     setSelectedIds(new Set())
+    setIsSelectAllMatching(false)
   }
 
   const toggleSelectAll = () => {
+    // 如果之前已经是跨页全选，再次点击则取消全选
+    if (isSelectAllMatching) {
+        setSelectedIds(new Set())
+        setIsSelectAllMatching(false)
+        return
+    }
+
     if (selectedIds.size === initialNotes.length) {
       setSelectedIds(new Set())
     } else {
       setSelectedIds(new Set(initialNotes.map(n => n.id)))
     }
   }
+  
+  const handleSelectAllMatching = () => {
+    setIsSelectAllMatching(true)
+    // 视觉上全选当前页，实际上标记为全选所有
+    setSelectedIds(new Set(initialNotes.map(n => n.id)))
+  }
 
   const handleSelectChange = (id: string, checked: boolean) => {
+    // 如果用户手动改变了某个选择，自动取消“跨页全选”状态
+    if (isSelectAllMatching) setIsSelectAllMatching(false)
+    
     const newSelected = new Set(selectedIds)
     if (checked) {
       newSelected.add(id)
@@ -72,17 +96,23 @@ export function NotesList({ initialNotes }: NotesListProps) {
   }
 
   const handleBulkDelete = () => {
-    if (selectedIds.size === 0) return
+    if (selectedIds.size === 0 && !isSelectAllMatching) return
     setShowDeleteDialog(true)
   }
 
   const confirmBulkDelete = () => {
     startTransition(async () => {
       try {
-        await bulkDeleteNotes(Array.from(selectedIds))
-        toast.success(`成功删除了 ${selectedIds.size} 条笔记`)
+        if (isSelectAllMatching) {
+            const res = await bulkDeleteAllMatchingNotes({ folderId, tagId })
+            toast.success(res.count ? `成功删除了 ${res.count} 条笔记` : '删除成功')
+        } else {
+            await bulkDeleteNotes(Array.from(selectedIds))
+            toast.success(`成功删除了 ${selectedIds.size} 条笔记`)
+        }
         setIsSelectionMode(false)
         setSelectedIds(new Set())
+        setIsSelectAllMatching(false)
         setShowDeleteDialog(false)
       } catch (error) {
         toast.error('删除失败，请重试')
@@ -92,6 +122,34 @@ export function NotesList({ initialNotes }: NotesListProps) {
 
   return (
     <div className="space-y-4">
+      {/* 跨页全选提示条 */}
+      {isSelectionMode && selectedIds.size === initialNotes.length && totalCount > initialNotes.length && !isSelectAllMatching && (
+        <div className="flex items-center justify-center rounded-md bg-muted/50 p-2 text-sm text-muted-foreground animate-in fade-in slide-in-from-top-1">
+          <span>已选择本页 {selectedIds.size} 条笔记。</span>
+          <button 
+            onClick={handleSelectAllMatching}
+            className="ml-2 font-medium text-primary hover:underline"
+          >
+            选择全部 {totalCount} 条笔记
+          </button>
+        </div>
+      )}
+      
+      {isSelectAllMatching && (
+        <div className="flex items-center justify-center rounded-md bg-primary/10 p-2 text-sm text-primary animate-in fade-in slide-in-from-top-1">
+          <span>已选择全部 {totalCount} 条笔记。</span>
+          <button 
+            onClick={() => {
+                setSelectedIds(new Set())
+                setIsSelectAllMatching(false)
+            }}
+            className="ml-2 font-medium hover:underline"
+          >
+            取消全选
+          </button>
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-4 h-10">
         <div className="flex items-center gap-2">
            {/* If we want to show stats or title here */}
@@ -134,17 +192,17 @@ export function NotesList({ initialNotes }: NotesListProps) {
           {isSelectionMode ? (
             <>
               <Button variant="ghost" size="sm" onClick={toggleSelectAll}>
-                {selectedIds.size === initialNotes.length ? <CheckSquare className="mr-2 h-4 w-4" /> : <Square className="mr-2 h-4 w-4" />}
+                {(selectedIds.size === initialNotes.length || isSelectAllMatching) ? <CheckSquare className="mr-2 h-4 w-4" /> : <Square className="mr-2 h-4 w-4" />}
                 全选
               </Button>
               <Button 
                 variant="destructive" 
                 size="sm" 
                 onClick={handleBulkDelete}
-                disabled={selectedIds.size === 0 || isPending}
+                disabled={(selectedIds.size === 0 && !isSelectAllMatching) || isPending}
               >
                 {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
-                删除 ({selectedIds.size})
+                删除 ({isSelectAllMatching ? totalCount : selectedIds.size})
               </Button>
               <Button variant="ghost" size="sm" onClick={toggleSelectionMode} disabled={isPending}>
                 <X className="mr-2 h-4 w-4" />
@@ -167,7 +225,7 @@ export function NotesList({ initialNotes }: NotesListProps) {
               key={note.id} 
               note={note} 
               isSelectionMode={isSelectionMode}
-              isSelected={selectedIds.has(note.id)}
+              isSelected={isSelectAllMatching || selectedIds.has(note.id)}
               onSelectChange={(checked) => handleSelectChange(note.id, checked)}
             />
           ))}
@@ -182,7 +240,7 @@ export function NotesList({ initialNotes }: NotesListProps) {
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
         title="批量删除笔记"
-        description={`确定要将选中的 ${selectedIds.size} 条笔记移至回收站吗？`}
+        description={`确定要将${isSelectAllMatching ? `所有匹配的 ${totalCount}` : `选中的 ${selectedIds.size}`} 条笔记移至回收站吗？`}
         onConfirm={confirmBulkDelete}
         variant="destructive"
         loading={isPending}

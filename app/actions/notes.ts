@@ -252,10 +252,14 @@ export async function bulkDeleteNotes(noteIds: string[]) {
   })
   if (!dbUser) throw new Error('User not found')
 
+  // 允许拥有者或协作者删除
   await prisma.note.updateMany({
     where: {
       id: { in: noteIds },
-      userId: dbUser.id,
+      OR: [
+        { userId: dbUser.id },
+        { collaborators: { some: { id: dbUser.id } } }
+      ]
     },
     data: { deletedAt: new Date() },
   })
@@ -263,6 +267,60 @@ export async function bulkDeleteNotes(noteIds: string[]) {
   revalidatePath('/notes')
   revalidatePath('/trash')
   return { success: true }
+}
+
+export async function bulkDeleteAllMatchingNotes(filter: { folderId?: string; tagId?: string }) {
+  const { userId } = await auth()
+  if (!userId) throw new Error('Unauthorized')
+
+  const dbUser = await prisma.user.findUnique({
+    where: { clerkId: userId },
+  })
+  if (!dbUser) throw new Error('User not found')
+
+  // 构建与列表页一致的查询条件
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const where: any = {
+    deletedAt: null,
+    // 基础权限：我创建的 OR 我协作的
+    OR: [
+        { userId: dbUser.id },
+        { collaborators: { some: { id: dbUser.id } } }
+    ]
+  }
+
+  // 附加筛选条件
+  if (filter.folderId) {
+    where.AND = [
+        { folderId: filter.folderId },
+        { OR: where.OR }
+    ]
+    delete where.OR
+  }
+
+  if (filter.tagId) {
+    const tagCondition = {
+        tags: { some: { id: filter.tagId } }
+    }
+    if (where.AND) {
+        where.AND.push(tagCondition)
+    } else {
+        where.AND = [
+            tagCondition,
+            { OR: where.OR }
+        ]
+        delete where.OR
+    }
+  }
+
+  const result = await prisma.note.updateMany({
+    where,
+    data: { deletedAt: new Date() },
+  })
+
+  revalidatePath('/notes')
+  revalidatePath('/trash')
+  return { success: true, count: result.count }
 }
 
 export async function bulkRestoreNotes(noteIds: string[]) {
