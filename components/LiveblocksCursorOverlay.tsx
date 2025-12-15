@@ -44,43 +44,51 @@ function Cursor({ editor, selection, color, name, containerRef }: any) {
     let animationFrameId: number
 
     const updatePosition = () => {
-      if (!editor || !selection || !containerRef.current) return
+      // 检查 containerRef 是否有 current，如果没有，说明编辑器还没挂载好
+      if (!editor || !selection || !containerRef.current) {
+         // 可能在重新渲染，下一帧再试
+         animationFrameId = requestAnimationFrame(updatePosition)
+         return
+      }
 
       try {
         // 尝试将 Slate Range 转换为 DOM Range
+        // 这一步最容易失败，因为 Slate 的虚拟节点可能还没对应的 DOM
         const domRange = ReactEditor.toDOMRange(editor, selection)
         const rects = domRange.getClientRects()
         
         if (rects.length > 0) {
-          // 这里的逻辑主要处理光标位置（collapsed selection）
-          // 如果是选区，通常显示选区背景，这里简化为只显示光标在选区起点
           const rect = rects[0]
           const containerRect = containerRef.current.getBoundingClientRect()
           
-          // 获取容器的滚动偏移
           const scrollTop = containerRef.current.scrollTop
           const scrollLeft = containerRef.current.scrollLeft
 
-          // 计算相对于容器的坐标
-          // 注意：如果容器有 padding，可能需要微调，但通常 rect 是相对于视口的
-          const top = rect.top - containerRect.top + scrollTop
-          const left = rect.left - containerRect.left + scrollLeft
-          
-          // 只有当位置发生显著变化时才更新 state，避免过于频繁的重渲染（可选）
-          setPosition({
-            top,
-            left,
-            height: rect.height
-          })
+          // 核心修复：确保 rect 是有意义的
+          // 比如当 rect 全部为 0 时可能是隐藏状态
+          if (rect.width === 0 && rect.height === 0 && rect.x === 0 && rect.y === 0) {
+             // 这种情况下可能是不可见的，跳过更新
+          } else {
+              const top = rect.top - containerRect.top + scrollTop
+              const left = rect.left - containerRect.left + scrollLeft
+              
+              setPosition({
+                top,
+                left,
+                height: rect.height || 20 // 兜底高度
+              })
+          }
         }
       } catch (e) {
-        // 常见错误：节点未找到（可能尚未渲染）
+        // 常见错误：Cannot find a DOM node for slate node
+        // 这通常发生在远程内容刚同步过来，Slate 节点树还没完全渲染成 DOM 时
+        // 忽略它，等待下一帧
       }
 
-      // 继续下一帧更新，确保跟随滚动和内容变化
       animationFrameId = requestAnimationFrame(updatePosition)
     }
 
+    // 启动循环
     updatePosition()
 
     return () => cancelAnimationFrame(animationFrameId)
@@ -90,24 +98,24 @@ function Cursor({ editor, selection, color, name, containerRef }: any) {
 
   return (
     <div
-      className="absolute pointer-events-none transition-all duration-75 ease-out"
+      className="absolute pointer-events-none transition-all duration-100 ease-out z-[9999]"
       style={{
         top: position.top,
         left: position.left,
         height: position.height,
+        // 添加一个 border 方便调试，发布时去掉
+        // border: `1px solid ${color}` 
       }}
     >
       {/* 光标竖线 */}
       <div className="w-[2px] h-full shadow-sm" style={{ backgroundColor: color }} />
       
-      {/* 名字标签 */}
+      {/* 名字标签 - 调整样式确保可见 */}
       <div
-        className="absolute -top-6 left-0 px-1.5 py-0.5 text-[10px] font-bold text-white whitespace-nowrap rounded-sm shadow-md z-50 opacity-0 transition-opacity hover:opacity-100"
+        className="absolute -top-6 left-0 px-2 py-0.5 text-[10px] font-bold text-white whitespace-nowrap rounded-sm shadow-md transition-opacity duration-200"
         style={{ 
             backgroundColor: color,
-            // 默认显示名字，或者 hover 显示？ 
-            // 现在的设计是 opacity-0 hover:opacity-100，也可以改为一直显示
-            opacity: 1 
+            opacity: 1 // 强制一直显示
         }}
       >
         {name}
