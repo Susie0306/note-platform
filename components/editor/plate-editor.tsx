@@ -336,11 +336,14 @@ export function PlateEditor({
         
         // 协同光标同步
         if (isCollaborative) {
-          // 这里使用 editor.selection 它是当前最新的
-          // 不需要防抖，因为光标移动需要实时性
-          // 但是 onValueChange 可能不会在仅光标移动时触发？
-          // Plate 的 onValueChange 通常是在 document 变化时触发
-          // 需要确认 Plate 是否有 onSelectionChange
+          if (editor.selection) {
+             const selectionData = JSON.parse(JSON.stringify(editor.selection))
+             // 只有当选区真正改变时才发送，防止死循环
+             // 但这里我们简单地依赖 useDebounce 或者让 Liveblocks 自己处理节流
+             // 这里是 onValueChange，意味着文档内容变了，光标通常也变了（或需要更新）
+             // 注意：仅仅移动光标不会触发 onValueChange
+             updateMyPresence({ selection: selectionData })
+          }
         }
 
         onChange?.(md)
@@ -350,12 +353,15 @@ export function PlateEditor({
         }
       }}
       onSelectionChange={(editor) => {
-         if (isCollaborative && editor.selection) {
-            // Liveblocks expects JSON-serializable data. Slate selection is technically compatible
-            // but type definitions might conflict. Casting to any or ensuring it's a plain object helps.
-            // 确保这是一个纯对象
-            const selectionData = JSON.parse(JSON.stringify(editor.selection))
-            updateMyPresence({ selection: selectionData })
+         if (isCollaborative) {
+            if (editor.selection) {
+               // 确保这是一个纯对象
+               const selectionData = JSON.parse(JSON.stringify(editor.selection))
+               updateMyPresence({ selection: selectionData })
+            } else {
+               // 当选区丢失（例如失去焦点）时，清除远程光标
+               updateMyPresence({ selection: null })
+            }
          }
       }}
     >
