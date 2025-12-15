@@ -351,7 +351,9 @@ export function PlateEditor({
       }}
       onSelectionChange={(editor) => {
          if (isCollaborative && editor.selection) {
-            updateMyPresence({ selection: editor.selection })
+            // Liveblocks expects JSON-serializable data. Slate selection is technically compatible
+            // but type definitions might conflict. Casting to any or ensuring it's a plain object helps.
+            updateMyPresence({ selection: editor.selection as any })
          }
       }}
     >
