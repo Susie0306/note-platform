@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Xiji</string>
+    <string name="title_activity_main">Xiji</string>
+    <string name="package_name">com.susie0306.xiji</string>
+    <string name="custom_url_scheme">com.susie0306.xiji</string>
+</resources>
