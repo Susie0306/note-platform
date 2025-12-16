@@ -18,25 +18,44 @@ From a technical perspective, the project is built on **Next.js 14 (App Router)*
 - **🌟 Wishboard**: A dedicated wish‑tracking module with timeline notes. Set target milestones and deadlines (e.g., “Learn guitar in 3 months”), and visualize progress with built‑in templates (travel planning, study goals, etc.).
 - **💊 Memory Capsule**: A time‑capsule feature that delivers warm reminders when the set time arrives, helping you revisit past wishes and cherish growth over time.
 
+## 📱 Mobile Experience (Android App)
+
+To make recording accessible anytime, anywhere, Xiji is now available on Android. Built with **Capacitor**, it encapsulates the powerful features of the Web into a native experience, keeping every "hope" within reach.
+
+- **🔄 Seamless Sync**: Whether at your desk or on the go, your notes are synchronized in real-time via the cloud.
+- **🎨 Immersive Design**: Optimized gestures and responsive layout for mobile devices, supporting immersive status bars and notch adaptation.
+- **🔐 Native Auth**: Integrated with Clerk authentication, supporting smooth login within the App without redirecting to an external browser.
+
+### 📥 Download & Install
+
+1. Click Releases in the sidebar.
+2. Download the latest `.apk` installation package (e.g., `Xiji-v1.0.0.apk`).
+3. Send it to your phone and install it (if prompted, please allow "Install apps from unknown sources").
+
 ## 🛠 Tech Stack
 
 ### Core Architecture
+
 - **Framework**: Next.js 14 (App Router, Server Actions)
+- **Mobile**: Capacitor 6 (Android)
 - **Language**: TypeScript (Strict Type Checking)
 - **Database**: PostgreSQL (Supabase) + Prisma ORM
 - **Authentication**: Clerk
 
 ### Editor & Collaboration
+
 - **Rich Text Engine**: Plate.js / Slate.js
 - **Real-Time Collaboration**: Liveblocks (Storage API)
 - **State Management**: Zustand (Global), React Context (Local)
 
 ### Offline & Storage
+
 - **Local Database**: IndexedDB (idb)
 - **File Storage**: UploadThing
 - **Sync Mechanism**: Self-developed bi-directional sync queue (Optimistic UI Updates)
 
 ### UI/UX
+
 - **Component Library**: Shadcn/ui (Radix UI + Tailwind CSS)
 - **Animation**: Framer Motion
 - **Notifications**: Sonner
@@ -46,57 +65,64 @@ From a technical perspective, the project is built on **Next.js 14 (App Router)*
 ## 💡 Technical Highlights & Challenges Resolved
 
 ### 1. Hybrid Real-time Collaboration
+
 This project didn't simply apply a collaboration library but solved a core challenge: **How to switch seamlessly between "Local-Only Editing" and "Multi-User Real-Time Collaboration" modes.**
 
-*   **Challenge**: Desynchronization between Plate.js/Slate's internal state (`Value`) and Liveblocks' shared storage (`Storage`) data structure can lead to infinite loops or content flickering.
-*   **Solution**:
-    *   Implemented precise **bi-directional binding control** in `components/editor/plate-editor.tsx`.
-    *   Used `useStorage` to subscribe to remote changes and `useMutation` to commit local changes.
-    *   Introduced an `isApplyingRemoteChangeRef` lock mechanism to accurately distinguish between "user input" and "remote synchronization," preventing update loops.
-    *   Implemented a dual guarantee mechanism of Debounce and Polling to ensure data consistency in weak network environments.
+- **Challenge**: Desynchronization between Plate.js/Slate's internal state (`Value`) and Liveblocks' shared storage (`Storage`) data structure can lead to infinite loops or content flickering.
+- **Solution**:
+  - Implemented precise **bi-directional binding control** in `components/editor/plate-editor.tsx`.
+  - Used `useStorage` to subscribe to remote changes and `useMutation` to commit local changes.
+  - Introduced an `isApplyingRemoteChangeRef` lock mechanism to accurately distinguish between "user input" and "remote synchronization," preventing update loops.
+  - Implemented a dual guarantee mechanism of Debounce and Polling to ensure data consistency in weak network environments.
 
 ### 2. Local-First & Offline Sync Queue
+
 To provide ultimate loading speed and offline availability, a complete offline synchronization strategy was implemented.
 
-*   **Architecture Design**:
-    *   **Read Path**: Prioritizes reading data from IndexedDB to render UI, then revalidates data in the background (`Lazy Sync`).
-    *   **Write Path**: All operations (Create/Update/Delete) are first written to local IndexedDB, with **Optimistic Updates** on the UI.
-    *   **Sync Manager (`SyncManager`)**:
-        *   Maintains an operation log-based `syncQueue` (CREATE/UPDATE/DELETE) in `lib/indexeddb.ts`.
-        *   Listens for `online/offline` events, automatically consuming the queue upon network recovery and batch synchronizing to PostgreSQL via Server Actions.
-        *   Handles eventual consistency issues (e.g., mapping between local IDs and server IDs).
+- **Architecture Design**:
+  - **Read Path**: Prioritizes reading data from IndexedDB to render UI, then revalidates data in the background (`Lazy Sync`).
+  - **Write Path**: All operations (Create/Update/Delete) are first written to local IndexedDB, with **Optimistic Updates** on the UI.
+  - **Sync Manager (`SyncManager`)**:
+    - Maintains an operation log-based `syncQueue` (CREATE/UPDATE/DELETE) in `lib/indexeddb.ts`.
+    - Listens for `online/offline` events, automatically consuming the queue upon network recovery and batch synchronizing to PostgreSQL via Server Actions.
+    - Handles eventual consistency issues (e.g., mapping between local IDs and server IDs).
 
 ### 3. Type-Safe System Design
+
 Fully adopted TypeScript with strict type definitions, rejecting `any`.
 
-*   **Prisma Type Extensions**: Defined composite types like `FolderWithCount` in `lib/types.ts`, solving the complexity of return type inference for Prisma relation queries (`include` / `_count`).
-*   **Editor Types**: Customized `MyEditor` type for Plate.js's complex plugin system, ensuring full code completion and type safety when writing custom plugins (such as AI plugins, media plugins).
+- **Prisma Type Extensions**: Defined composite types like `FolderWithCount` in `lib/types.ts`, solving the complexity of return type inference for Prisma relation queries (`include` / `_count`).
+- **Editor Types**: Customized `MyEditor` type for Plate.js's complex plugin system, ensuring full code completion and type safety when writing custom plugins (such as AI plugins, media plugins).
 
 ### 4. High-Performance Sidebar Navigation
+
 Refactored the sidebar component for scenarios with a large number of notes and folders.
 
-*   **Optimization**:
-    *   Optimized original recursive components into flat data structure (`NavNode`) processing, building the tree structure instantly on the frontend.
-    *   Separated `MobileNavWrapper` from desktop logic, achieving state isolation under responsive layouts.
-    *   Utilized Next.js's `revalidatePath` in conjunction with Optimistic UI, making folder creation/movement operations feel latency-free.
+- **Optimization**:
+  - Optimized original recursive components into flat data structure (`NavNode`) processing, building the tree structure instantly on the frontend.
+  - Separated `MobileNavWrapper` from desktop logic, achieving state isolation under responsive layouts.
+  - Utilized Next.js's `revalidatePath` in conjunction with Optimistic UI, making folder creation/movement operations feel latency-free.
 
 ---
 
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - Node.js 18+
 - PostgreSQL Database
 
 ### Installation Steps
 
 1. **Clone the Project**
+
    ```bash
    git clone https://github.com/your-username/note-platform.git
    cd note-platform
    ```
 
 2. **Install Dependencies**
+
    ```bash
    npm install
    # or
@@ -105,6 +131,7 @@ Refactored the sidebar component for scenarios with a large number of notes and 
 
 3. **Configure Environment Variables**
    Copy `.env.example` to `.env` and fill in the following service keys:
+
    ```env
    # Database
    DATABASE_URL="postgresql://..."
@@ -124,6 +151,7 @@ Refactored the sidebar component for scenarios with a large number of notes and 
    ```
 
 4. **Database Migration**
+
    ```bash
    npx prisma generate
    npx prisma db push
@@ -162,4 +190,3 @@ Issues and Pull Requests are welcome. For major changes, please discuss in an Is
 ## 📄 License
 
 MIT License
-
