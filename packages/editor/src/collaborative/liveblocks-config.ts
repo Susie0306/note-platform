@@ -57,14 +57,10 @@ export interface LiveblocksConfig {
  * })
  * ```
  */
-export function createLiveblocksConfig(options: {
-  authEndpoint?: string
-  publicApiKey?: string
-}): LiveblocksConfig {
-  const client = createClient({
-    authEndpoint: options.authEndpoint,
-    publicApiKey: options.publicApiKey,
-  })
+export function createLiveblocksConfig(
+  options: { authEndpoint: string } | { publicApiKey: string }
+): LiveblocksConfig {
+  const client = createClient(options as any)
 
   const {
     RoomProvider,

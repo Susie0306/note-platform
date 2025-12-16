@@ -9,7 +9,7 @@
     "editor:build": "npm run build -w @susie/editor",
     "editor:dev": "npm run dev -w @susie/editor",
     "dev": "next dev --webpack",
-    "build": "next build --webpack",
+    "build": "npm run editor:build && next build --webpack",
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate"

@@ -3,6 +3,7 @@ import path from 'path'
 
 const nextConfig: NextConfig = {
   transpilePackages: [
+    '@susie/editor',
     'platejs',
     '@platejs/core',
     '@platejs/utils',

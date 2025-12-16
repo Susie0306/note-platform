@@ -1,6 +1,6 @@
-import { CopilotKit, BasicBlocksKit, CodeBlockKit, TableKit, ToggleKit, TocKit, MediaKit, CalloutKit, ColumnKit, MathKit, DateKit, LinkKit, MentionKit, FontKit, ListKit, AlignKit, LineHeightKit, SlashKit, AutoformatKit, CursorOverlayKit, BlockMenuKit, DndKit, EmojiKit, ExitBreakKit, DocxKit, BlockPlaceholderKit, FixedToolbarKit, FloatingToolbarKit } from './chunk-5PMWPIG2.js';
-import { BasicMarksKit, DiscussionKit, CommentKit, SuggestionKit, MarkdownKit, EditorContainer, Editor } from './chunk-VJEBNFCX.js';
-export { Editor, EditorContainer, EditorView, cn } from './chunk-VJEBNFCX.js';
+import { CopilotKit, BasicBlocksKit, CodeBlockKit, TableKit, ToggleKit, TocKit, MediaKit, CalloutKit, ColumnKit, MathKit, DateKit, LinkKit, MentionKit, FontKit, ListKit, AlignKit, LineHeightKit, SlashKit, AutoformatKit, CursorOverlayKit, BlockMenuKit, DndKit, EmojiKit, ExitBreakKit, DocxKit, BlockPlaceholderKit, FixedToolbarKit, FloatingToolbarKit } from './chunk-SCWOTE5W.js';
+import { BasicMarksKit, DiscussionKit, CommentKit, SuggestionKit, MarkdownKit, EditorContainer, Editor } from './chunk-F5HWG2OZ.js';
+export { Editor, EditorContainer, EditorView, cn } from './chunk-F5HWG2OZ.js';
 import './chunk-VGP27YFB.js';
 import { useRef } from 'react';
 import { useEditorRef, usePlateEditor, Plate } from 'platejs/react';

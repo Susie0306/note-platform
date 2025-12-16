@@ -94,10 +94,7 @@ function Cursor({ editor, selection, color, name, containerRef }) {
   );
 }
 function createLiveblocksConfig(options) {
-  const client = createClient({
-    authEndpoint: options.authEndpoint,
-    publicApiKey: options.publicApiKey
-  });
+  const client = createClient(options);
   const {
     RoomProvider: RoomProvider2,
     useRoom: useRoom2,
