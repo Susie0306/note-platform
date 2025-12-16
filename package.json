@@ -2,7 +2,12 @@
   "name": "note-platform",
   "version": "0.1.0",
   "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
+    "editor:build": "npm run build -w @susie/editor",
+    "editor:dev": "npm run dev -w @susie/editor",
     "dev": "next dev --webpack",
     "build": "next build --webpack",
     "start": "next start",
