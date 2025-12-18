@@ -34,13 +34,6 @@ export default async function Home() {
   const dbUser = await prisma.user.findUnique({
     where: { clerkId: userId },
     include: {
-      _count: {
-        select: { 
-          notes: true,
-          sharedNotes: true, // 包含协作笔记的数量
-          wishes: true // 获取心愿数量
-        },
-      },
       wishes: { // 获取进行中的心愿
         where: { status: 'IN_PROGRESS' },
         take: 3,
@@ -74,21 +67,39 @@ export default async function Home() {
     )
   }
 
-  // 获取最近的 3 条笔记 (包括自己创建的 和 协作的)
-  const recentNotes = await prisma.note.findMany({
-    where: { 
-      deletedAt: null,
-      OR: [
-        { userId: dbUser.id },
-        { collaborators: { some: { id: dbUser.id } } }
-      ]
-    },
-    orderBy: { updatedAt: 'desc' },
-    take: 3,
-  })
-
-  // 获取今日回忆
-  const memory = await getDailyMemory()
+  const [recentNotes, memory, notesCount, wishesCount] = await Promise.all([
+    // 获取最近的 3 条笔记 (包括自己创建的 和 协作的)
+    prisma.note.findMany({
+      where: { 
+        deletedAt: null,
+        OR: [
+          { userId: dbUser.id },
+          { collaborators: { some: { id: dbUser.id } } }
+        ]
+      },
+      orderBy: { updatedAt: 'desc' },
+      take: 3,
+    }),
+    // 获取今日回忆
+    getDailyMemory(),
+    // 统计笔记数量 (排除回收站)
+    prisma.note.count({
+      where: {
+        deletedAt: null,
+        OR: [
+          { userId: dbUser.id },
+          { collaborators: { some: { id: dbUser.id } } }
+        ]
+      }
+    }),
+    // 统计心愿数量 (排除回收站)
+    prisma.wish.count({
+      where: {
+        userId: dbUser.id,
+        deletedAt: null
+      }
+    })
+  ])
 
   const fullName =
     [user.firstName, user.lastName].filter(Boolean).join('') || user.username || '朋友'
@@ -122,7 +133,7 @@ export default async function Home() {
             <FileText className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{dbUser._count.notes + dbUser._count.sharedNotes}</div>
+            <div className="text-2xl font-bold">{notesCount}</div>
             <p className="text-muted-foreground text-xs">记录的点点滴滴</p>
           </CardContent>
         </Card>
@@ -135,7 +146,7 @@ export default async function Home() {
               <Sparkles className="text-muted-foreground h-4 w-4" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{dbUser._count.wishes}</div>
+              <div className="text-2xl font-bold">{wishesCount}</div>
               <p className="text-muted-foreground text-xs">正在奔赴的美好</p>
             </CardContent>
           </Card>
