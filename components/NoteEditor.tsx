@@ -122,6 +122,7 @@ function NoteEditorContent({
   initialTags,
   initialCreatedAt,
   initialFolderId,
+  initialFolderName,
   roomId,
   userName,
   userColor,
@@ -259,7 +260,7 @@ function NoteEditorContent({
             <FolderSelector 
               noteId={noteId} 
               currentFolderId={folderId} 
-              currentFolderName={props.initialFolderName} 
+              currentFolderName={initialFolderName} 
               onChange={setFolderId} 
             />
             <ShareButton />
