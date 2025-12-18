@@ -26,6 +26,7 @@ interface NoteCardProps {
     createdAt: Date
     tags: { id: string; name: string }[]
     folderId?: string | null
+    folder?: { id: string; name: string } | null
   }
   isSelectionMode?: boolean
   isSelected?: boolean
@@ -159,6 +160,7 @@ export function NoteCard({
               <FolderSelector
                 noteId={note.id}
                 currentFolderId={note.folderId}
+                currentFolderName={note.folder?.name}
                 onUpdate={onUpdate}
               />
             </div>

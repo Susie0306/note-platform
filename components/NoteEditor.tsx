@@ -53,6 +53,7 @@ interface NoteEditorProps {
   initialTags: string[]
   initialCreatedAt: Date
   initialFolderId?: string | null
+  initialFolderName?: string | null
 }
 
 interface CollaborativeNoteEditorProps extends NoteEditorProps {
@@ -255,7 +256,12 @@ function NoteEditorContent({
                 {others.length + 1} 人在线
               </span>
             </div>
-            <FolderSelector noteId={noteId} currentFolderId={folderId} onChange={setFolderId} />
+            <FolderSelector 
+              noteId={noteId} 
+              currentFolderId={folderId} 
+              currentFolderName={props.initialFolderName} 
+              onChange={setFolderId} 
+            />
             <ShareButton />
             <div className="hidden items-center gap-1 text-xs sm:flex sm:text-sm">
               {isSaving ? (

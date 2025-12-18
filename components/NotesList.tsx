@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Note, Tag } from '@prisma/client'
+import { Note, Tag, Folder } from '@prisma/client'
 import { Trash2, X, CheckSquare, Square, Loader2, ArrowUpDown, Check, ArrowUp, ArrowDown } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 
 interface NotesListProps {
-  initialNotes: (Note & { tags: Tag[] })[]
+  initialNotes: (Note & { tags: Tag[], folder: Folder | null })[]
   totalCount: number
   folderId?: string
   tagId?: string
@@ -248,6 +248,10 @@ export function NotesList({ initialNotes, totalCount, folderId, tagId }: NotesLi
     </div>
   )
 }
+
+
+
+
 
 
 

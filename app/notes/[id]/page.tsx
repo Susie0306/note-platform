@@ -19,7 +19,7 @@ export default async function NotePage({ params }: NotePageProps) {
   // 使用 include 连带查询 tags
   const note = await prisma.note.findUnique({
     where: { id },
-    include: { tags: true },
+    include: { tags: true, folder: true },
   })
 
   if (!note) return <div>笔记未找到</div>
@@ -34,6 +34,7 @@ export default async function NotePage({ params }: NotePageProps) {
         initialTags={note.tags.map((tag) => tag.name)}
         initialCreatedAt={note.createdAt}
         initialFolderId={note.folderId}
+        initialFolderName={note.folder?.name}
       />
     </div>
   )

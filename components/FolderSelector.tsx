@@ -25,11 +25,12 @@ import { FolderWithCount } from '@/lib/types'
 interface FolderSelectorProps {
   noteId: string
   currentFolderId: string | null | undefined
+  currentFolderName?: string | null | undefined
   onChange?: (folderId: string | null) => void
   onUpdate?: () => void
 }
 
-export function FolderSelector({ noteId, currentFolderId, onChange, onUpdate }: FolderSelectorProps) {
+export function FolderSelector({ noteId, currentFolderId, currentFolderName, onChange, onUpdate }: FolderSelectorProps) {
   const [open, setOpen] = useState(false)
   const [folders, setFolders] = useState<FolderWithCount[]>([])
   const [search, setSearch] = useState('')
@@ -86,6 +87,7 @@ export function FolderSelector({ noteId, currentFolderId, onChange, onUpdate }: 
   }
 
   const currentFolder = folders.find(f => f.id === currentFolderId)
+  const displayFolderName = currentFolder?.name || currentFolderName || '未分类'
 
   return (
     <Popover open={open} onOpenChange={(isOpen) => {
@@ -101,7 +103,7 @@ export function FolderSelector({ noteId, currentFolderId, onChange, onUpdate }: 
         >
           <FolderIcon className="h-4 w-4" />
           <span className="max-w-[100px] truncate text-xs">
-            {currentFolder ? currentFolder.name : '未分类'}
+            {displayFolderName}
           </span>
         </Button>
       </PopoverTrigger>
