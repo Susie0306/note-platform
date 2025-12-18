@@ -6,8 +6,7 @@ import { useRouter } from 'next/navigation'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import { Trash2 } from 'lucide-react'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
+import { MarkdownPreview } from '@/components/MarkdownPreview'
 
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { FolderSelector } from '@/components/FolderSelector'
@@ -111,36 +110,7 @@ export function NoteCard({
             )}
             {/* Markdown 预览区域 */}
             <div className="relative h-[4.5em] overflow-hidden text-sm text-gray-500">
-              <div className="prose prose-sm dark:prose-invert pointer-events-none max-w-none [&>*:first-child]:mt-0">
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  components={{
-                    // 禁用图片渲染或限制图片大小，避免破坏卡片布局
-                    img: ({ node, ...props }) => (
-                      <span className="text-muted-foreground text-xs">[图片]</span>
-                    ),
-                    // 简化标题显示，避免太大
-                    h1: ({ node, ...props }) => (
-                      <p className="mb-1 text-base font-bold" {...props} />
-                    ),
-                    h2: ({ node, ...props }) => (
-                      <p className="mb-1 text-base font-bold" {...props} />
-                    ),
-                    h3: ({ node, ...props }) => (
-                      <p className="mb-1 text-base font-bold" {...props} />
-                    ),
-                    // 确保列表紧凑
-                    ul: ({ node, ...props }) => <ul className="my-0.5 list-disc pl-4" {...props} />,
-                    ol: ({ node, ...props }) => (
-                      <ol className="my-0.5 list-decimal pl-4" {...props} />
-                    ),
-                    li: ({ node, ...props }) => <li className="my-0" {...props} />,
-                    p: ({ node, ...props }) => <p className="my-0.5 leading-snug" {...props} />,
-                  }}
-                >
-                  {note.content || '暂无内容...'}
-                </ReactMarkdown>
-              </div>
+              <MarkdownPreview content={note.content || '暂无内容...'} />
             </div>
           </CardContent>
         </Link>

@@ -10,6 +10,7 @@ import { ArrowRight, FileText, PenLine, Sparkles } from 'lucide-react'
 import prisma from '@/lib/prisma'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { MarkdownPreview } from '@/components/MarkdownPreview'
 
 export default async function Home() {
   const { userId } = await auth()
@@ -167,9 +168,9 @@ export default async function Home() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="line-clamp-2 text-sm text-gray-500">
-                      {note.content || '暂无内容...'}
-                    </p>
+                    <div className="relative h-[3em] overflow-hidden text-sm text-gray-500">
+                      <MarkdownPreview content={note.content || '暂无内容...'} />
+                    </div>
                     <p className="mt-4 text-xs text-gray-400">
                       {formatDistanceToNow(new Date(note.updatedAt), {
                         addSuffix: true,
